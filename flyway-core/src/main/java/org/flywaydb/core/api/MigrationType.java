@@ -67,7 +67,22 @@ public enum MigrationType {
     /**
      * Undo migrations using custom MigrationResolvers.
      */
-    UNDO_CUSTOM(false, true);
+    UNDO_CUSTOM(false, true),
+
+    @Deprecated
+    UNI ( false , false ) ,
+
+    @Deprecated
+    PRE ( false , false ) ,
+
+    @Deprecated
+    POS ( false , false ) ,
+
+    @Deprecated
+    DDL ( false , false ) ,
+
+    @Deprecated
+    DML ( false , false );
 
     private final boolean synthetic;
     private final boolean undo;
