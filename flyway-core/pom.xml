@@ -52,6 +52,12 @@
             <groupId>com.google.android</groupId>
             <artifactId>android</artifactId>
             <optional>true</optional>
+            <exclusions>
+            	<exclusion>
+            		<groupId>commons-codec</groupId>
+            		<artifactId>commons-codec</artifactId>
+            	</exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.postgresql</groupId>
