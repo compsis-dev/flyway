@@ -15,16 +15,16 @@
 --
 
 CREATE TABLE "${schema}"."${table}" (
-    "installed_rank" INT NOT NULL PRIMARY KEY,
-    "version" VARCHAR(50),
-    "description" VARCHAR(200) NOT NULL,
-    "type" VARCHAR(20) NOT NULL,
-    "script" VARCHAR(1000) NOT NULL,
-    "checksum" INT,
-    "installed_by" VARCHAR(100) NOT NULL,
-    "installed_on" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%d %H:%M:%f','now')),
-    "execution_time" INT NOT NULL,
-    "success" BOOLEAN NOT NULL
+    "${installedRankColumn}" INT NOT NULL PRIMARY KEY,
+    "${versionColumn}" VARCHAR(50),
+    "${descriptionColumn}" VARCHAR(200) NOT NULL,
+    "${typeColumn}" VARCHAR(20) NOT NULL,
+    "${scriptColumn}" VARCHAR(1000) NOT NULL,
+    "${checksumColumn}" INT,
+    "${installedByColumn}" VARCHAR(100) NOT NULL,
+    "${installedOnColumn}" TEXT NOT NULL DEFAULT (strftime('%Y-%m-%d %H:%M:%f','now')),
+    "${executionTimeColumn}" INT NOT NULL,
+    "${successColumn}" BOOLEAN NOT NULL
 );
 
-CREATE INDEX "${schema}"."${table}_s_idx" ON "${table}" ("success");
+CREATE INDEX "${schema}"."${table}_s_idx" ON "${table}" ("${successColumn}");

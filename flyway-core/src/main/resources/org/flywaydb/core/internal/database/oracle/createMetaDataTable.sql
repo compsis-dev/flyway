@@ -15,17 +15,17 @@
 --
 
 CREATE TABLE "${schema}"."${table}" (
-    "installed_rank" INT NOT NULL,
-    "version" VARCHAR2(50),
-    "description" VARCHAR2(200) NOT NULL,
-    "type" VARCHAR2(20) NOT NULL,
-    "script" VARCHAR2(1000) NOT NULL,
-    "checksum" INT,
-    "installed_by" VARCHAR2(100) NOT NULL,
-    "installed_on" TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    "execution_time" INT NOT NULL,
-    "success" NUMBER(1) NOT NULL
+    "${installedRankColumn}" INT NOT NULL,
+    "${versionColumn}" VARCHAR2(50),
+    "${descriptionColumn}" VARCHAR2(200) NOT NULL,
+    "${typeColumn}" VARCHAR2(20) NOT NULL,
+    "${scriptColumn}" VARCHAR2(1000) NOT NULL,
+    "${checksumColumn}" INT,
+    "${installedByColumn}" VARCHAR2(100) NOT NULL,
+    "${installedOnColumn}" TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    "${executionTimeColumn}" INT NOT NULL,
+    "${successColumn}" NUMBER(1) NOT NULL
 );
-ALTER TABLE "${schema}"."${table}" ADD CONSTRAINT "${table}_pk" PRIMARY KEY ("installed_rank");
+ALTER TABLE "${schema}"."${table}" ADD CONSTRAINT "${table}_pk" PRIMARY KEY ("${installedRankColumn}");
 
-CREATE INDEX "${schema}"."${table}_s_idx" ON "${schema}"."${table}" ("success");
+CREATE INDEX "${schema}"."${table}_s_idx" ON "${schema}"."${table}" ("${successColumn}");

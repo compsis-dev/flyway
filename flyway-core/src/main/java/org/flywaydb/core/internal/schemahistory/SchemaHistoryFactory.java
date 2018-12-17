@@ -46,7 +46,7 @@ public class SchemaHistoryFactory {
                 : configuration.getInstalledBy();
 
         Table table = schema.getTable(configuration.getTable());
-        JdbcTableSchemaHistory jdbcTableSchemaHistory = new JdbcTableSchemaHistory(database, table, installedBy);
+        JdbcTableSchemaHistory jdbcTableSchemaHistory = new JdbcTableSchemaHistory( configuration , database , table , installedBy );
 
 
 

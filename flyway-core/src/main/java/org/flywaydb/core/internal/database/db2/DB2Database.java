@@ -15,17 +15,16 @@
  */
 package org.flywaydb.core.internal.database.db2;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+
 import org.flywaydb.core.api.configuration.Configuration;
 import org.flywaydb.core.internal.database.base.Database;
 import org.flywaydb.core.internal.database.base.Table;
 import org.flywaydb.core.internal.placeholder.PlaceholderReplacer;
 import org.flywaydb.core.internal.resource.LoadableResource;
-import org.flywaydb.core.internal.resource.ResourceProvider;
 import org.flywaydb.core.internal.resource.StringResource;
 import org.flywaydb.core.internal.sqlscript.SqlStatementBuilderFactory;
-
-import java.sql.Connection;
-import java.sql.SQLException;
 
 /**
  * DB2 database.
@@ -86,16 +85,16 @@ public class DB2Database extends Database<DB2Connection> {
     @Override
     public LoadableResource getRawCreateScript() {
         return new StringResource("CREATE TABLE \"${schema}\".\"${table}\" (\n" +
-                "    \"installed_rank\" INT NOT NULL,\n" +
-                "    \"version\" VARCHAR(50),\n" +
-                "    \"description\" VARCHAR(200) NOT NULL,\n" +
-                "    \"type\" VARCHAR(20) NOT NULL,\n" +
-                "    \"script\" VARCHAR(1000) NOT NULL,\n" +
-                "    \"checksum\" INT,\n" +
-                "    \"installed_by\" VARCHAR(100) NOT NULL,\n" +
-                "    \"installed_on\" TIMESTAMP DEFAULT CURRENT TIMESTAMP NOT NULL,\n" +
-                "    \"execution_time\" INT NOT NULL,\n" +
-                "    \"success\" SMALLINT NOT NULL,\n" +
+                "    \"${installedRankColumn}\" INT NOT NULL,\n" +
+                "    \"${versionColumn}\" VARCHAR(50),\n" +
+                "    \"${descriptionColumn}\" VARCHAR(200) NOT NULL,\n" +
+                "    \"${typeColumn}\" VARCHAR(20) NOT NULL,\n" +
+                "    \"${scriptColumn}\" VARCHAR(1000) NOT NULL,\n" +
+                "    \"${checksumColumn}\" INT,\n" +
+                "    \"${installedByColumn}\" VARCHAR(100) NOT NULL,\n" +
+                "    \"${installedOnColumn}\" TIMESTAMP DEFAULT CURRENT TIMESTAMP NOT NULL,\n" +
+                "    \"${executionTimeColumn}\" INT NOT NULL,\n" +
+                "    \"${successColumn}\" SMALLINT NOT NULL,\n" +
                 "    CONSTRAINT \"${table}_s\" CHECK (\"success\" in(0,1))\n" +
 
 
@@ -104,7 +103,7 @@ public class DB2Database extends Database<DB2Connection> {
 
 
 
-                + "ALTER TABLE \"${schema}\".\"${table}\" ADD CONSTRAINT \"${table}_pk\" PRIMARY KEY (\"installed_rank\");\n" +
+                + "ALTER TABLE \"${schema}\".\"${table}\" ADD CONSTRAINT \"${table}_pk\" PRIMARY KEY (\"${installedRankColumn}\");\n" +
                 "\n" +
                 "CREATE INDEX \"${schema}\".\"${table}_s_idx\" ON \"${schema}\".\"${table}\" (\"success\");");
     }

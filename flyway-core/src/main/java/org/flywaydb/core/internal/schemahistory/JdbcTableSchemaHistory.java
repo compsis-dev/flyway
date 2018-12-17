@@ -15,13 +15,20 @@
  */
 package org.flywaydb.core.internal.schemahistory;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.Callable;
+
 import org.flywaydb.core.api.FlywayException;
 import org.flywaydb.core.api.MigrationType;
 import org.flywaydb.core.api.MigrationVersion;
+import org.flywaydb.core.api.configuration.Configuration;
 import org.flywaydb.core.api.logging.Log;
 import org.flywaydb.core.api.logging.LogFactory;
 import org.flywaydb.core.api.resolver.ResolvedMigration;
-import org.flywaydb.core.internal.callback.NoopCallbackExecutor;
 import org.flywaydb.core.internal.database.base.Connection;
 import org.flywaydb.core.internal.database.base.Database;
 import org.flywaydb.core.internal.database.base.Table;
@@ -29,13 +36,6 @@ import org.flywaydb.core.internal.exception.FlywaySqlException;
 import org.flywaydb.core.internal.jdbc.JdbcTemplate;
 import org.flywaydb.core.internal.jdbc.RowMapper;
 import org.flywaydb.core.internal.jdbc.TransactionTemplate;
-
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.Callable;
 
 /**
  * Supports reading and writing to the schema history table.
@@ -65,19 +65,23 @@ class JdbcTableSchemaHistory extends SchemaHistory {
      */
     private final String installedBy;
 
+    private Configuration configuration;
+
     /**
      * Creates a new instance of the schema history table support.
+     * @param configuration 
      *
      * @param database    The database to use.
      * @param table       The schema history table used by flyway.
      * @param installedBy The user invoking Flyway, for audit purposes.
      */
-    JdbcTableSchemaHistory(Database database, Table table, String installedBy) {
+    JdbcTableSchemaHistory(Configuration configuration, Database database, Table table, String installedBy) {
         this.table = determineTable(table);
         this.database = database;
         this.connection = database.getMainConnection();
         this.jdbcTemplate = connection.getJdbcTemplate();
         this.installedBy = installedBy;
+        this.configuration = configuration;
     }
 
     /**
@@ -198,22 +202,22 @@ class JdbcTableSchemaHistory extends SchemaHistory {
         try {
             cache.addAll(jdbcTemplate.query(query, new RowMapper<AppliedMigration>() {
                 public AppliedMigration mapRow(final ResultSet rs) throws SQLException {
-                    Integer checksum = rs.getInt("checksum");
+                    Integer checksum = rs.getInt( configuration.getChecksumColumn() );
                     if (rs.wasNull()) {
                         checksum = null;
                     }
 
                     return new AppliedMigration(
-                            rs.getInt("installed_rank"),
-                            rs.getString("version") != null ? MigrationVersion.fromVersion(rs.getString("version")) : null,
-                            rs.getString("description"),
-                            MigrationType.valueOf(rs.getString("type")),
-                            rs.getString("script"),
+                            rs.getInt( configuration.getInstalledRankColumn() ) ,
+                            rs.getString( configuration.getVersionColumn() ) != null ? MigrationVersion.fromVersion( rs.getString( configuration.getVersionColumn() ) ) : null ,
+                            rs.getString( configuration.getDescriptionColumn() ) ,
+                            MigrationType.valueOf( rs.getString( configuration.getTypeColumn() ) ) ,
+                            rs.getString( configuration.getScriptColumn() ) ,
                             checksum,
-                            rs.getTimestamp("installed_on"),
-                            rs.getString("installed_by"),
-                            rs.getInt("execution_time"),
-                            rs.getBoolean("success")
+                            rs.getTimestamp( configuration.getInstalledOnColumn() ) ,
+                            rs.getString( configuration.getInstalledByColumn() ) ,
+                            rs.getInt( configuration.getExecutionTimeColumn() ) ,
+                            rs.getBoolean( configuration.getSuccessColumn() )
                     );
                 }
             }));
@@ -245,7 +249,7 @@ class JdbcTableSchemaHistory extends SchemaHistory {
         try {
             clearCache();
             jdbcTemplate.execute("DELETE FROM " + table
-                    + " WHERE " + database.quote("success") + " = " + database.getBooleanFalse());
+                    + " WHERE " + database.quote( configuration.getSuccessColumn() ) + " = " + database.getBooleanFalse() );
         } catch (SQLException e) {
             throw new FlywaySqlException("Unable to repair Schema History table " + table, e);
         }

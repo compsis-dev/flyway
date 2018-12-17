@@ -15,6 +15,14 @@
  */
 package org.flywaydb.core.api.configuration;
 
+import java.io.File;
+import java.io.OutputStream;
+import java.nio.charset.Charset;
+import java.util.Map;
+import java.util.Properties;
+
+import javax.sql.DataSource;
+
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.FlywayException;
 import org.flywaydb.core.api.Location;
@@ -22,13 +30,6 @@ import org.flywaydb.core.api.MigrationVersion;
 import org.flywaydb.core.api.callback.Callback;
 import org.flywaydb.core.api.migration.JavaMigration;
 import org.flywaydb.core.api.resolver.MigrationResolver;
-
-import javax.sql.DataSource;
-import java.io.File;
-import java.io.OutputStream;
-import java.nio.charset.Charset;
-import java.util.Map;
-import java.util.Properties;
 
 /**
  * Fluent configuration for Flyway. This is the preferred means of configuring the Flyway API.
@@ -92,6 +93,56 @@ public class FluentConfiguration implements Configuration {
     @Override
     public String getTable() {
         return config.getTable();
+    }
+
+    @Override
+    public String getInstalledRankColumn () {
+        return config.getInstalledRankColumn();
+    }
+
+    @Override
+    public String getVersionColumn () {
+        return config.getVersionColumn();
+    }
+
+    @Override
+    public String getDescriptionColumn () {
+        return config.getDescriptionColumn();
+    }
+
+    @Override
+    public String getTypeColumn () {
+        return config.getTypeColumn();
+    }
+
+    @Override
+    public String getScriptColumn () {
+        return config.getScriptColumn();
+    }
+
+    @Override
+    public String getChecksumColumn () {
+        return config.getChecksumColumn();
+    }
+
+    @Override
+    public String getInstalledOnColumn () {
+        return config.getInstalledOnColumn();
+    }
+
+    @Override
+    public String getInstalledByColumn () {
+        return config.getInstalledByColumn();
+    }
+
+    @Override
+    public String getExecutionTimeColumn () {
+        return config.getExecutionTimeColumn();
+    }
+
+    @Override
+    public String getSuccessColumn () {
+        return config.getSuccessColumn();
     }
 
     @Override
@@ -553,6 +604,56 @@ public class FluentConfiguration implements Configuration {
      */
     public FluentConfiguration table(String table) {
         config.setTable(table);
+        return this;
+    }
+
+    public FluentConfiguration installedRankColumn ( String installedRankColumn ) {
+        config.setInstalledRankColumn( installedRankColumn );
+        return this;
+    }
+
+    public FluentConfiguration versionColumn ( String versionColumn ) {
+        config.setVersionColumn( versionColumn );
+        return this;
+    }
+
+    public FluentConfiguration descriptionColumn ( String descriptionColumn ) {
+        config.setDescriptionColumn( descriptionColumn );
+        return this;
+    }
+
+    public FluentConfiguration typeColumn ( String typeColumn ) {
+        config.setTypeColumn( typeColumn );
+        return this;
+    }
+
+    public FluentConfiguration scriptColumn ( String scriptColumn ) {
+        config.setScriptColumn( scriptColumn );
+        return this;
+    }
+
+    public FluentConfiguration checksumColumn ( String checksumColumn ) {
+        config.setChecksumColumn( checksumColumn );
+        return this;
+    }
+
+    public FluentConfiguration installedByColumn ( String installedByColumn ) {
+        config.setInstalledByColumn( installedByColumn );
+        return this;
+    }
+
+    public FluentConfiguration installedOnColumn ( String installedOnColumn ) {
+        config.setInstalledOnColumn( installedOnColumn );
+        return this;
+    }
+
+    public FluentConfiguration executionTimeColumn ( String executionTimeColumn ) {
+        config.setExecutionTimeColumn( executionTimeColumn );
+        return this;
+    }
+
+    public FluentConfiguration successColumn ( String successColumn ) {
+        config.setSuccessColumn( successColumn );
         return this;
     }
 

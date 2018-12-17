@@ -15,18 +15,18 @@
 --
 
 CREATE TABLE `${schema}`.`${table}` (
-    `installed_rank` INT NOT NULL,
-    `version` VARCHAR(50),
-    `description` VARCHAR(200) NOT NULL,
-    `type` VARCHAR(20) NOT NULL,
-    `script` VARCHAR(1000) NOT NULL,
-    `checksum` INT,
-    `installed_by` VARCHAR(100) NOT NULL,
-    `installed_on` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `execution_time` INT NOT NULL,
-    `success` BOOL NOT NULL,
+    `${installedRankColumn}` INT NOT NULL,
+    `${versionColumn}` VARCHAR(50),
+    `${descriptionColumn}` VARCHAR(200) NOT NULL,
+    `${typeColumn}` VARCHAR(20) NOT NULL,
+    `${scriptColumn}` VARCHAR(1000) NOT NULL,
+    `${checksumColumn}` INT,
+    `${installedByColumn}` VARCHAR(100) NOT NULL,
+    `${installedOnColumn}` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `${executionTimeColumn}` INT NOT NULL,
+    `${successColumn}` BOOL NOT NULL,
     -- Add the primary key as part of the CREATE TABLE statement in case `innodb_force_primary_key` is enabled
-    CONSTRAINT `${table}_pk`PRIMARY KEY (`installed_rank`)
+    CONSTRAINT `${table}_pk`PRIMARY KEY (`${installedRankColumn}`)
 ) ENGINE=InnoDB;
 
-CREATE INDEX `${table}_s_idx` ON `${schema}`.`${table}` (`success`);
+CREATE INDEX `${table}_s_idx` ON `${schema}`.`${table}` (`${successColumn}`);

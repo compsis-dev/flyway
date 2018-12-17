@@ -15,16 +15,17 @@
  */
 package org.flywaydb.core.api.configuration;
 
+import java.io.OutputStream;
+import java.nio.charset.Charset;
+import java.util.Map;
+
+import javax.sql.DataSource;
+
 import org.flywaydb.core.api.Location;
 import org.flywaydb.core.api.MigrationVersion;
 import org.flywaydb.core.api.callback.Callback;
 import org.flywaydb.core.api.migration.JavaMigration;
 import org.flywaydb.core.api.resolver.MigrationResolver;
-
-import javax.sql.DataSource;
-import java.io.OutputStream;
-import java.nio.charset.Charset;
-import java.util.Map;
 
 /**
  * Flyway configuration.
@@ -208,6 +209,17 @@ public interface Configuration {
      * @return The name of the schema schema history table that will be used by flyway. (default: flyway_schema_history)
      */
     String getTable();
+
+    String getInstalledRankColumn();
+    String getVersionColumn();
+    String getDescriptionColumn();
+    String getTypeColumn();
+    String getScriptColumn();
+    String getChecksumColumn();
+    String getInstalledByColumn();
+    String getInstalledOnColumn();
+    String getExecutionTimeColumn();
+    String getSuccessColumn();
 
     /**
      * Retrieves the schemas managed by Flyway. These schema names are case-sensitive.

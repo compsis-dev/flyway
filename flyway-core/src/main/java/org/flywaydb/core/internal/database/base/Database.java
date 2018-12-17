@@ -15,12 +15,17 @@
  */
 package org.flywaydb.core.internal.database.base;
 
+import java.io.Closeable;
+import java.nio.charset.StandardCharsets;
+import java.sql.DatabaseMetaData;
+import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.flywaydb.core.api.MigrationVersion;
 import org.flywaydb.core.api.configuration.Configuration;
 import org.flywaydb.core.api.logging.Log;
 import org.flywaydb.core.api.logging.LogFactory;
-import org.flywaydb.core.internal.callback.CallbackExecutor;
-import org.flywaydb.core.internal.callback.NoopCallbackExecutor;
 import org.flywaydb.core.internal.exception.FlywayDbUpgradeRequiredException;
 import org.flywaydb.core.internal.exception.FlywaySqlException;
 import org.flywaydb.core.internal.jdbc.DatabaseType;
@@ -32,8 +37,6 @@ import org.flywaydb.core.internal.placeholder.DefaultPlaceholderReplacer;
 import org.flywaydb.core.internal.placeholder.NoopPlaceholderReplacer;
 import org.flywaydb.core.internal.placeholder.PlaceholderReplacer;
 import org.flywaydb.core.internal.resource.LoadableResource;
-import org.flywaydb.core.internal.resource.NoopResourceProvider;
-import org.flywaydb.core.internal.resource.ResourceProvider;
 import org.flywaydb.core.internal.resource.StringResource;
 import org.flywaydb.core.internal.resource.classpath.ClassPathResource;
 import org.flywaydb.core.internal.sqlscript.DefaultSqlScriptExecutor;
@@ -41,14 +44,6 @@ import org.flywaydb.core.internal.sqlscript.Delimiter;
 import org.flywaydb.core.internal.sqlscript.SqlScript;
 import org.flywaydb.core.internal.sqlscript.SqlScriptExecutor;
 import org.flywaydb.core.internal.sqlscript.SqlStatementBuilderFactory;
-import org.flywaydb.core.internal.util.ExceptionUtils;
-
-import java.io.Closeable;
-import java.nio.charset.StandardCharsets;
-import java.sql.DatabaseMetaData;
-import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Abstraction for database-specific functionality.
@@ -453,6 +448,17 @@ public abstract class Database<C extends Connection> implements Closeable {
         placeholders.put("table", table.getName());
         placeholders.put("table_quoted", table.toString());
 
+        placeholders.put( "installedRankColumn", configuration.getInstalledRankColumn() );
+        placeholders.put( "versionColumn", configuration.getVersionColumn() );
+        placeholders.put( "descriptionColumn", configuration.getDescriptionColumn() );
+        placeholders.put( "typeColumn", configuration.getTypeColumn() );
+        placeholders.put( "scriptColumn", configuration.getScriptColumn() );
+        placeholders.put( "checksumColumn", configuration.getChecksumColumn() );
+        placeholders.put( "installedOnColumn", configuration.getInstalledOnColumn() );
+        placeholders.put( "installedByColumn", configuration.getInstalledByColumn() );
+        placeholders.put( "executionTimeColumn", configuration.getExecutionTimeColumn() );
+        placeholders.put( "successColumn", configuration.getSuccessColumn() );
+
         PlaceholderReplacer placeholderReplacer =
                 createPlaceholderReplacer(true, placeholders, "${", "}");
 
@@ -461,6 +467,8 @@ public abstract class Database<C extends Connection> implements Closeable {
 
 
         );
+
+        LOG.info( "Building create script, placeholders: " + placeholders );
 
         return new SqlScript(sqlStatementBuilderFactory, getRawCreateScript(), false);
     }
@@ -472,33 +480,33 @@ public abstract class Database<C extends Connection> implements Closeable {
 
     public String getInsertStatement(Table table) {
         return "INSERT INTO " + table
-                + " (" + quote("installed_rank")
-                + "," + quote("version")
-                + "," + quote("description")
-                + "," + quote("type")
-                + "," + quote("script")
-                + "," + quote("checksum")
-                + "," + quote("installed_by")
-                + "," + quote("execution_time")
-                + "," + quote("success")
+                + " (" + quote( configuration.getInstalledRankColumn())
+                + "," + quote( configuration.getVersionColumn())
+                + "," + quote( configuration.getDescriptionColumn())
+                + "," + quote( configuration.getTypeColumn())
+                + "," + quote( configuration.getScriptColumn())
+                + "," + quote( configuration.getChecksumColumn())
+                + "," + quote( configuration.getInstalledByColumn())
+                + "," + quote( configuration.getExecutionTimeColumn())
+                + "," + quote( configuration.getSuccessColumn())
                 + ")"
                 + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
     }
 
     public String getSelectStatement(Table table, int maxCachedInstalledRank) {
-        return "SELECT " + quote("installed_rank")
-                + "," + quote("version")
-                + "," + quote("description")
-                + "," + quote("type")
-                + "," + quote("script")
-                + "," + quote("checksum")
-                + "," + quote("installed_on")
-                + "," + quote("installed_by")
-                + "," + quote("execution_time")
-                + "," + quote("success")
+        return "SELECT " + quote( configuration.getInstalledRankColumn())
+                + "," + quote( configuration.getVersionColumn())
+                + "," + quote( configuration.getDescriptionColumn())
+                + "," + quote( configuration.getTypeColumn())
+                + "," + quote( configuration.getScriptColumn())
+                + "," + quote( configuration.getChecksumColumn())
+                + "," + quote( configuration.getInstalledOnColumn())
+                + "," + quote( configuration.getInstalledByColumn())
+                + "," + quote( configuration.getExecutionTimeColumn())
+                + "," + quote( configuration.getSuccessColumn())
                 + " FROM " + table
-                + " WHERE " + quote("installed_rank") + " > " + maxCachedInstalledRank
-                + " ORDER BY " + quote("installed_rank");
+                + " WHERE " + quote( configuration.getInstalledRankColumn()) + " > " + maxCachedInstalledRank
+                + " ORDER BY " + quote( configuration.getInstalledRankColumn());
     }
 
     public void close() {

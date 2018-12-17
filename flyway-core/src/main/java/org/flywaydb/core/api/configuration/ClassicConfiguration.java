@@ -15,6 +15,20 @@
  */
 package org.flywaydb.core.api.configuration;
 
+import java.io.File;
+import java.io.OutputStream;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+
+import javax.sql.DataSource;
+
 import org.flywaydb.core.api.FlywayException;
 import org.flywaydb.core.api.Location;
 import org.flywaydb.core.api.MigrationVersion;
@@ -28,22 +42,6 @@ import org.flywaydb.core.internal.jdbc.DriverDataSource;
 import org.flywaydb.core.internal.util.ClassUtils;
 import org.flywaydb.core.internal.util.Locations;
 import org.flywaydb.core.internal.util.StringUtils;
-
-import javax.sql.DataSource;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
 
 /**
  * JavaBean-style configuration for Flyway. This is primarily meant for compatibility with scenarios where the
@@ -120,6 +118,17 @@ public class ClassicConfiguration implements Configuration {
      * placed in the first schema of the list. </p>
      */
     private String table = "flyway_schema_history";
+
+    private String installedRankColumn = "installed_rank";
+    private String versionColumn = "version";
+    private String descriptionColumn = "description";
+    private String typeColumn = "type";
+    private String scriptColumn = "script";
+    private String checksumColumn = "checksum";
+    private String installedOnColumn = "installed_on";
+    private String installedByColumn = "installed_by";
+    private String executionTimeColumn = "execution_time";
+    private String successColumn = "success";
 
     /**
      * The target version up to which Flyway should consider migrations. Migrations with a higher version number will
@@ -460,6 +469,56 @@ public class ClassicConfiguration implements Configuration {
     @Override
     public String getTable() {
         return table;
+    }
+
+    @Override
+    public String getInstalledRankColumn () {
+    	return installedRankColumn;
+    }
+
+    @Override
+    public String getVersionColumn () {
+    	return versionColumn;
+    }
+
+    @Override
+    public String getDescriptionColumn () {
+    	return descriptionColumn;
+    }
+
+    @Override
+    public String getTypeColumn () {
+    	return typeColumn;
+    }
+
+    @Override
+    public String getScriptColumn () {
+    	return scriptColumn;
+    }
+
+    @Override
+    public String getChecksumColumn () {
+    	return checksumColumn;
+    }
+
+    @Override
+    public String getInstalledOnColumn () {
+        return installedOnColumn;
+    }
+
+    @Override
+    public String getInstalledByColumn () {
+        return installedByColumn;
+    }
+
+    @Override
+    public String getExecutionTimeColumn () {
+    	return executionTimeColumn;
+    }
+
+    @Override
+    public String getSuccessColumn () {
+    	return successColumn;
     }
 
     @Override
@@ -965,6 +1024,46 @@ public class ClassicConfiguration implements Configuration {
         this.table = table;
     }
 
+    public void setInstalledRankColumn ( String installedRankColumn ) {
+        this.installedRankColumn = installedRankColumn;
+    }
+
+    public void setVersionColumn ( String versionColumn ) {
+        this.versionColumn = versionColumn;
+    }
+
+    public void setDescriptionColumn ( String descriptionColumn ) {
+        this.descriptionColumn = descriptionColumn;
+    }
+
+    public void setTypeColumn ( String typeColumn ) {
+        this.typeColumn = typeColumn;
+    }
+
+    public void setScriptColumn ( String scriptColumn ) {
+        this.scriptColumn = scriptColumn;
+    }
+
+    public void setChecksumColumn ( String checksumColumn ) {
+        this.checksumColumn = checksumColumn;
+    }
+
+    public void setInstalledByColumn ( String installedByColumn ) {
+        this.installedByColumn = installedByColumn;
+    }
+
+    public void setInstalledOnColumn ( String installedOnColumn ) {
+        this.installedOnColumn = installedOnColumn;
+    }
+
+    public void setExecutionTimeColumn ( String executionTimeColumn ) {
+        this.executionTimeColumn = executionTimeColumn;
+    }
+
+    public void setSuccessColumn ( String successColumn ) {
+        this.successColumn = successColumn;
+    }
+
     /**
      * Sets the target version up to which Flyway should consider migrations. Migrations with a higher version number will
      * be ignored.
@@ -1462,6 +1561,18 @@ public class ClassicConfiguration implements Configuration {
         setSqlMigrationSeparator(configuration.getSqlMigrationSeparator());
         setSqlMigrationSuffixes(configuration.getSqlMigrationSuffixes());
         setTable(configuration.getTable());
+
+        setInstalledRankColumn( configuration.getInstalledRankColumn() );
+        setVersionColumn( configuration.getVersionColumn() );
+        setDescriptionColumn( configuration.getDescriptionColumn() );
+        setTypeColumn( configuration.getTypeColumn() );
+        setScriptColumn( configuration.getScriptColumn() );
+        setChecksumColumn( configuration.getChecksumColumn() );
+        setInstalledByColumn( configuration.getInstalledByColumn() );
+        setInstalledOnColumn( configuration.getInstalledOnColumn() );
+        setExecutionTimeColumn( configuration.getExecutionTimeColumn() );
+        setSuccessColumn( configuration.getSuccessColumn() );
+
         setTarget(configuration.getTarget());
         setValidateOnMigrate(configuration.isValidateOnMigrate());
     }
