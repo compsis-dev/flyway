@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2018 Boxfuse GmbH
+ * Copyright 2010-2019 Boxfuse GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,18 +17,15 @@ package org.flywaydb.core.internal.resource.filesystem;
 
 import org.flywaydb.core.api.FlywayException;
 import org.flywaydb.core.api.Location;
-import org.flywaydb.core.internal.line.DefaultLineReader;
-import org.flywaydb.core.internal.line.LineReader;
 import org.flywaydb.core.internal.resource.LoadableResource;
-import org.flywaydb.core.internal.util.BomStrippingReader;
-import org.flywaydb.core.internal.util.FileCopyUtils;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
+import java.nio.file.StandardOpenOption;
 
 /**
  * A resource on the filesystem.
@@ -91,39 +88,25 @@ public class FileSystemResource extends LoadableResource {
         return file.getAbsolutePath();
     }
 
-    /**
-     * Loads this resource as a string.
-     *
-     * @return The string contents of the resource.
-     */
     @Override
-    public LineReader loadAsString() {
+    public Reader read() {
         try {
-
-
-
-
-
-            return new DefaultLineReader(new BomStrippingReader(new InputStreamReader(new FileInputStream(file), encoding)));
+            return Channels.newReader(FileChannel.open(file.toPath(), StandardOpenOption.READ), encoding.newDecoder(), 4096);
         } catch (IOException e) {
             throw new FlywayException("Unable to load filesystem resource: " + file.getPath() + " (encoding: " + encoding + ")", e);
         }
     }
 
-    /**
-     * Loads this resource as a byte array.
-     *
-     * @return The contents of the resource.
-     */
-    @Override
-    public byte[] loadAsBytes() {
-        try {
-            InputStream inputStream = new FileInputStream(file);
-            return FileCopyUtils.copyToByteArray(inputStream);
-        } catch (IOException e) {
-            throw new FlywayException("Unable to load filesystem resource: " + file.getPath(), e);
-        }
-    }
+
+
+
+
+
+
+
+
+
+
 
     /**
      * @return The filename of this resource, without the path.

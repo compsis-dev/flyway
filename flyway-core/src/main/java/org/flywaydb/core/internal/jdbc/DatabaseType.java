@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2018 Boxfuse GmbH
+ * Copyright 2010-2019 Boxfuse GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,9 @@ import java.sql.Types;
 public enum DatabaseType {
     COCKROACHDB("CockroachDB", Types.NULL),
     DB2("DB2", Types.VARCHAR),
+
+
+
     DERBY("Derby", Types.VARCHAR),
     H2("H2", Types.VARCHAR),
     HSQLDB("HSQLDB", Types.VARCHAR),
@@ -82,10 +85,15 @@ public enum DatabaseType {
         if (databaseProductName.startsWith("Microsoft SQL Server")) {
             return SQLSERVER;
         }
+
+        // #2289: MariaDB JDBC driver 2.4.0 and newer report MariaDB as "MariaDB"
+        if (databaseProductName.startsWith("MariaDB")
+                // Older versions of the driver report MariaDB as "MySQL"
+                || databaseProductName.contains("MySQL") && databaseProductVersion.contains("MariaDB")) {
+            return MARIADB;
+        }
+
         if (databaseProductName.contains("MySQL")) {
-            if (databaseProductVersion.contains("MariaDB")) {
-                return MARIADB;
-            }
             // Google Cloud SQL returns different names depending on the environment and the SDK version.
             //   ex.: Google SQL Service/MySQL
             return MYSQL;
@@ -103,6 +111,11 @@ public enum DatabaseType {
             return POSTGRESQL;
         }
         if (databaseProductName.startsWith("DB2")) {
+
+
+
+
+
             return DB2;
         }
         if (databaseProductName.startsWith("ASE")) {

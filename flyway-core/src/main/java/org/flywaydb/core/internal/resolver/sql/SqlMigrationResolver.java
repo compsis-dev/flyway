@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2018 Boxfuse GmbH
+ * Copyright 2010-2019 Boxfuse GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import org.flywaydb.core.internal.resolver.ResolvedMigrationImpl;
 import org.flywaydb.core.internal.resource.LoadableResource;
 import org.flywaydb.core.internal.resource.ResourceProvider;
 import org.flywaydb.core.internal.sqlscript.SqlScript;
-import org.flywaydb.core.internal.sqlscript.SqlStatementBuilderFactory;
+import org.flywaydb.core.internal.sqlscript.SqlScriptFactory;
 import org.flywaydb.core.internal.util.Pair;
 
 import java.util.ArrayList;
@@ -55,7 +55,7 @@ public class SqlMigrationResolver implements MigrationResolver {
      */
     private final ResourceProvider resourceProvider;
 
-    private final SqlStatementBuilderFactory sqlStatementBuilderFactory;
+    private final SqlScriptFactory sqlScriptFactory;
 
 
 
@@ -74,18 +74,18 @@ public class SqlMigrationResolver implements MigrationResolver {
      *
      * @param database                   The database-specific support.
      * @param resourceProvider           The Scanner for loading migrations on the classpath.
-     * @param sqlStatementBuilderFactory The SQL statement builder factory.
+     * @param sqlScriptFactory The SQL statement builder factory.
      * @param configuration              The Flyway configuration.
      */
     public SqlMigrationResolver(Database database, ResourceProvider resourceProvider,
-                                SqlStatementBuilderFactory sqlStatementBuilderFactory
+                                SqlScriptFactory sqlScriptFactory
 
 
 
             , Configuration configuration) {
         this.database = database;
         this.resourceProvider = resourceProvider;
-        this.sqlStatementBuilderFactory = sqlStatementBuilderFactory;
+        this.sqlScriptFactory = sqlScriptFactory;
 
 
 
@@ -137,7 +137,11 @@ public class SqlMigrationResolver implements MigrationResolver {
             migration.setDescription(info.getRight());
             migration.setScript(resource.getRelativePath());
 
-            SqlScript sqlScript = new SqlScript(sqlStatementBuilderFactory, resource, configuration.isMixed());
+            SqlScript sqlScript = sqlScriptFactory.createSqlScript(resource, configuration.isMixed()
+
+
+
+            );
 
 
 
@@ -181,6 +185,7 @@ public class SqlMigrationResolver implements MigrationResolver {
             migrations.add(migration);
         }
     }
+
 
 
 

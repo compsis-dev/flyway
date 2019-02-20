@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2018 Boxfuse GmbH
+ * Copyright 2010-2019 Boxfuse GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,13 @@ package org.flywaydb.core.internal.resource.android;
 import android.content.res.AssetManager;
 import org.flywaydb.core.api.FlywayException;
 import org.flywaydb.core.api.Location;
-import org.flywaydb.core.internal.line.DefaultLineReader;
-import org.flywaydb.core.internal.line.LineReader;
 import org.flywaydb.core.internal.resource.LoadableResource;
 import org.flywaydb.core.internal.util.BomStrippingReader;
-import org.flywaydb.core.internal.util.FileCopyUtils;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.nio.charset.Charset;
 
 /**
@@ -64,20 +63,11 @@ public class AndroidResource extends LoadableResource {
     }
 
     @Override
-    public LineReader loadAsString() {
+    public Reader read() {
         try {
-            return new DefaultLineReader(new BomStrippingReader(new InputStreamReader(assetManager.open(fileNameWithAbsolutePath), encoding)));
+            return new BufferedReader(new BomStrippingReader(new InputStreamReader(assetManager.open(fileNameWithAbsolutePath), encoding)));
         } catch (IOException e) {
-            throw new FlywayException("Unable to load asset: " + getAbsolutePath(), e);
-        }
-    }
-
-    @Override
-    public byte[] loadAsBytes() {
-        try {
-            return FileCopyUtils.copyToByteArray(assetManager.open(fileNameWithAbsolutePath));
-        } catch (IOException e) {
-            throw new FlywayException("Unable to load asset: " + fileNameWithAbsolutePath, e);
+            throw new FlywayException("Unable to read asset: " + getAbsolutePath(), e);
         }
     }
 

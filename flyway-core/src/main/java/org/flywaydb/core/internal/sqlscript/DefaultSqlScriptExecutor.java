@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2018 Boxfuse GmbH
+ * Copyright 2010-2019 Boxfuse GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import org.flywaydb.core.internal.util.AsciiTable;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 public class DefaultSqlScriptExecutor implements SqlScriptExecutor {
@@ -88,17 +89,42 @@ public class DefaultSqlScriptExecutor implements SqlScriptExecutor {
 
 
 
-        List<SqlStatement> sqlStatements = sqlScript.getSqlStatements();
-        for (int i = 0; i < sqlStatements.size(); i++) {
-            SqlStatement sqlStatement = sqlStatements.get(i);
-            String sql = sqlStatement.getSql();
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Executing "
+        try (SqlStatementIterator sqlStatementIterator = sqlScript.getSqlStatements()) {
+            while (sqlStatementIterator.hasNext()) {
+                SqlStatement sqlStatement = sqlStatementIterator.next();
 
 
 
-                        + "SQL: " + sql);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                    executeStatement(jdbcTemplate, sqlScript, sqlStatement);
+
+
+
             }
+        }
 
 
 
@@ -106,26 +132,15 @@ public class DefaultSqlScriptExecutor implements SqlScriptExecutor {
 
 
 
+    }
+
+    private void logStatementExecution(SqlStatement sqlStatement) {
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Executing "
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-                executeStatement(jdbcTemplate, sqlScript, sqlStatement);
-
-
-
+                    + "SQL: " + sqlStatement.getSql());
         }
     }
 
@@ -177,6 +192,7 @@ public class DefaultSqlScriptExecutor implements SqlScriptExecutor {
 
 
     private void executeStatement(JdbcTemplate jdbcTemplate, SqlScript sqlScript, SqlStatement sqlStatement) {
+        logStatementExecution(sqlStatement);
         String sql = sqlStatement.getSql() + sqlStatement.getDelimiter();
 
 
@@ -184,7 +200,11 @@ public class DefaultSqlScriptExecutor implements SqlScriptExecutor {
 
 
 
-        Results results = sqlStatement.execute(jdbcTemplate, this);
+        Results results = sqlStatement.execute(jdbcTemplate
+
+
+
+        );
         if (results.getException() != null) {
 
 
@@ -235,7 +255,9 @@ public class DefaultSqlScriptExecutor implements SqlScriptExecutor {
 
 
     private void handleUpdateCount(long updateCount) {
-        LOG.debug("Update Count: " + updateCount);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Update Count: " + updateCount);
+        }
     }
 
     protected void handleException(Results results, SqlScript sqlScript, SqlStatement sqlStatement) {

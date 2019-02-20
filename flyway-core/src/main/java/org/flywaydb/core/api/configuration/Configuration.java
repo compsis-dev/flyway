@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2018 Boxfuse GmbH
+ * Copyright 2010-2019 Boxfuse GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -201,12 +201,12 @@ public interface Configuration {
     MigrationVersion getTarget();
 
     /**
-     * <p>Retrieves the name of the schema schema history table that will be used by Flyway.</p><p> By default (single-schema
+     * <p>Retrieves the name of the schema history table that will be used by Flyway.</p><p> By default (single-schema
      * mode) the schema history table is placed in the default schema for the connection provided by the datasource. </p> <p>
      * When the <i>flyway.schemas</i> property is set (multi-schema mode), the schema history table is placed in the first
      * schema of the list. </p>
      *
-     * @return The name of the schema schema history table that will be used by flyway. (default: flyway_schema_history)
+     * @return The name of the schema history table that will be used by Flyway. (default: flyway_schema_history)
      */
     String getTable();
 
@@ -220,6 +220,15 @@ public interface Configuration {
     String getInstalledOnColumn();
     String getExecutionTimeColumn();
     String getSuccessColumn();
+
+    /**
+     * <p>Retrieves the tablespace where to create the schema history table that will be used by Flyway.</p>
+     * <p>This setting is only relevant for databases that do support the notion of tablespaces. It's value is simply
+     * ignored for all others.</p>
+     *
+     * @return The tablespace where to create the schema history table that will be used by Flyway. (default: The default tablespace for the database connection)
+     */
+    String getTablespace();
 
     /**
      * Retrieves the schemas managed by Flyway. These schema names are case-sensitive.
@@ -345,7 +354,7 @@ public interface Configuration {
 
     /**
      * Whether to automatically call clean or not when a validation error occurs.
-     * <p> This is exclusively intended as a convenience for development. Even tough we
+     * <p> This is exclusively intended as a convenience for development. even though we
      * strongly recommend not to change migration scripts once they have been checked into SCM and run, this provides a
      * way of dealing with this case in a smooth manner. The database will be wiped clean automatically, ensuring that
      * the next migration will bring you back to the state checked into SCM.</p>
@@ -450,6 +459,16 @@ public interface Configuration {
      * @return {@code true} to active SQL*Plus support. {@code false} to fail fast instead. (default: {@code false})
      */
     boolean isOracleSqlplus();
+
+    /**
+     * Whether Flyway should issue a warning instead of an error whenever it encounters an Oracle SQL*Plus statement
+     * it doesn't yet support.
+     *
+     * <p><i>Flyway Pro and Flyway Enterprise only</i></p>
+     *
+     * @return {@code true} to issue a warning. {@code false} to fail fast instead. (default: {@code false})
+     */
+    boolean isOracleSqlplusWarn();
 
     /**
      * Your Flyway license key (FL01...). Not yet a Flyway Pro or Enterprise Edition customer?

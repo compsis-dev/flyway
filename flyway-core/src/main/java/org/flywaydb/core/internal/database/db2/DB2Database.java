@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2018 Boxfuse GmbH
+ * Copyright 2010-2019 Boxfuse GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,18 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 import org.flywaydb.core.api.configuration.Configuration;
+import org.flywaydb.core.api.configuration.FluentConfiguration;
 import org.flywaydb.core.internal.database.base.Database;
 import org.flywaydb.core.internal.database.base.Table;
-import org.flywaydb.core.internal.placeholder.PlaceholderReplacer;
+import org.flywaydb.core.internal.parser.Parser;
 import org.flywaydb.core.internal.resource.LoadableResource;
 import org.flywaydb.core.internal.resource.StringResource;
-import org.flywaydb.core.internal.sqlscript.SqlStatementBuilderFactory;
+import org.flywaydb.core.internal.sqlscript.ParserSqlScript;
+import org.flywaydb.core.internal.sqlscript.SqlScript;
+
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.Map;
 
 /**
  * DB2 database.
@@ -61,29 +67,45 @@ public class DB2Database extends Database<DB2Connection> {
         );
     }
 
+
+
+
+
+
+
+
+
+
     @Override
     public final void ensureSupported() {
         ensureDatabaseIsRecentEnough("9.7");
 
-        ensureDatabaseNotOlderThanOtherwiseRecommendUpgradeToFlywayEdition("10.5", org.flywaydb.core.internal.license.Edition.ENTERPRISE);
-
-
-        ensureDatabaseNotOlderThanOtherwiseRecommendUpgradeToFlywayEdition("11.1", org.flywaydb.core.internal.license.Edition.PRO);
+        ensureDatabaseNotOlderThanOtherwiseRecommendUpgradeToFlywayEdition("11.1", org.flywaydb.core.internal.license.Edition.ENTERPRISE);
 
         recommendFlywayUpgradeIfNecessary("11.1");
     }
 
     @Override
-    protected SqlStatementBuilderFactory createSqlStatementBuilderFactory(PlaceholderReplacer placeholderReplacer
+    protected SqlScript getCreateScript(Map<String, String> placeholders) {
+        Parser parser = new DB2Parser(new FluentConfiguration().placeholders(placeholders));
+        return new ParserSqlScript(parser, getRawCreateScript(), false);
+    }
+
+    @Override
+    public SqlScript createSqlScript(LoadableResource resource, boolean mixed
 
 
 
     ) {
-        return new DB2SqlStatementBuilderFactory(placeholderReplacer);
+        return new ParserSqlScript(new DB2Parser(configuration), resource, mixed);
     }
 
     @Override
     public LoadableResource getRawCreateScript() {
+        String tablespace = configuration.getTablespace() == null
+                ? ""
+                : " IN \"" + configuration.getTablespace() + "\"";
+
         return new StringResource("CREATE TABLE \"${schema}\".\"${table}\" (\n" +
                 "    \"${installedRankColumn}\" INT NOT NULL,\n" +
                 "    \"${versionColumn}\" VARCHAR(50),\n" +
@@ -96,13 +118,15 @@ public class DB2Database extends Database<DB2Connection> {
                 "    \"${executionTimeColumn}\" INT NOT NULL,\n" +
                 "    \"${successColumn}\" SMALLINT NOT NULL,\n" +
                 "    CONSTRAINT \"${table}_s\" CHECK (\"success\" in(0,1))\n" +
+                ")" +
 
 
 
-                        ") ORGANIZE BY ROW;\n"
+                        " ORGANIZE BY ROW"
 
 
 
+                + tablespace + ";\n"
                 + "ALTER TABLE \"${schema}\".\"${table}\" ADD CONSTRAINT \"${table}_pk\" PRIMARY KEY (\"${installedRankColumn}\");\n" +
                 "\n" +
                 "CREATE INDEX \"${schema}\".\"${table}_s_idx\" ON \"${schema}\".\"${table}\" (\"success\");");
@@ -113,11 +137,6 @@ public class DB2Database extends Database<DB2Connection> {
         return super.getSelectStatement(table, maxCachedInstalledRank)
                 // Allow uncommitted reads so info can be invoked while migrate is running
                 + " WITH UR";
-    }
-
-    @Override
-    public String getDbName() {
-        return "db2";
     }
 
     @Override

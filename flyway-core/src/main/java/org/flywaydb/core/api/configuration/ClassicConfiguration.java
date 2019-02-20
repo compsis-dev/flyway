@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2018 Boxfuse GmbH
+ * Copyright 2010-2019 Boxfuse GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,7 +112,7 @@ public class ClassicConfiguration implements Configuration {
     private String[] schemaNames = {};
 
     /**
-     * <p>The name of the schema schema history table that will be used by Flyway. (default: flyway_schema_history)</p><p> By default
+     * <p>The name of the schema history table that will be used by Flyway. (default: flyway_schema_history)</p><p> By default
      * (single-schema mode) the schema history table is placed in the default schema for the connection provided by the
      * datasource. </p> <p> When the <i>flyway.schemas</i> property is set (multi-schema mode), the schema history table is
      * placed in the first schema of the list. </p>
@@ -129,6 +129,14 @@ public class ClassicConfiguration implements Configuration {
     private String installedByColumn = "installed_by";
     private String executionTimeColumn = "execution_time";
     private String successColumn = "success";
+
+    /**
+     * <p>Retrieves the tablespace where to create the schema history table that will be used by Flyway.</p>
+     * <p>This setting is only relevant for databases that do support the notion of tablespaces. It's value is simply
+     * ignored for all others.</p>
+     * (default: The default tablespace for the database connection)
+     */
+    private String tablespace;
 
     /**
      * The target version up to which Flyway should consider migrations. Migrations with a higher version number will
@@ -267,7 +275,7 @@ public class ClassicConfiguration implements Configuration {
 
     /**
      * Whether to automatically call clean or not when a validation error occurs. (default: {@code false})
-     * <p> This is exclusively intended as a convenience for development. Even tough we
+     * <p> This is exclusively intended as a convenience for development. even though we
      * strongly recommend not to change migration scripts once they have been checked into SCM and run, this provides a
      * way of dealing with this case in a smooth manner. The database will be wiped clean automatically, ensuring that
      * the next migration will bring you back to the state checked into SCM.</p>
@@ -472,33 +480,38 @@ public class ClassicConfiguration implements Configuration {
     }
 
     @Override
+    public String getTablespace() {
+        return tablespace;
+    }
+
+    @Override
     public String getInstalledRankColumn () {
-    	return installedRankColumn;
+      return installedRankColumn;
     }
 
     @Override
     public String getVersionColumn () {
-    	return versionColumn;
+      return versionColumn;
     }
 
     @Override
     public String getDescriptionColumn () {
-    	return descriptionColumn;
+      return descriptionColumn;
     }
 
     @Override
     public String getTypeColumn () {
-    	return typeColumn;
+      return typeColumn;
     }
 
     @Override
     public String getScriptColumn () {
-    	return scriptColumn;
+      return scriptColumn;
     }
 
     @Override
     public String getChecksumColumn () {
-    	return checksumColumn;
+      return checksumColumn;
     }
 
     @Override
@@ -513,12 +526,12 @@ public class ClassicConfiguration implements Configuration {
 
     @Override
     public String getExecutionTimeColumn () {
-    	return executionTimeColumn;
+      return executionTimeColumn;
     }
 
     @Override
     public String getSuccessColumn () {
-    	return successColumn;
+      return successColumn;
     }
 
     @Override
@@ -927,7 +940,7 @@ public class ClassicConfiguration implements Configuration {
 
     /**
      * Whether to automatically call clean or not when a validation error occurs.
-     * <p> This is exclusively intended as a convenience for development. Even tough we
+     * <p> This is exclusively intended as a convenience for development. even though we
      * strongly recommend not to change migration scripts once they have been checked into SCM and run, this provides a
      * way of dealing with this case in a smooth manner. The database will be wiped clean automatically, ensuring that
      * the next migration will bring you back to the state checked into SCM.</p>
@@ -1013,12 +1026,12 @@ public class ClassicConfiguration implements Configuration {
     }
 
     /**
-     * <p>Sets the name of the schema schema history table that will be used by Flyway.</p><p> By default (single-schema mode)
+     * <p>Sets the name of the schema history table that will be used by Flyway.</p><p> By default (single-schema mode)
      * the schema history table is placed in the default schema for the connection provided by the datasource. </p> <p> When
      * the <i>flyway.schemas</i> property is set (multi-schema mode), the schema history table is placed in the first schema
      * of the list. </p>
      *
-     * @param table The name of the schema schema history table that will be used by flyway. (default: flyway_schema_history)
+     * @param table The name of the schema history table that will be used by Flyway. (default: flyway_schema_history)
      */
     public void setTable(String table) {
         this.table = table;
@@ -1062,6 +1075,17 @@ public class ClassicConfiguration implements Configuration {
 
     public void setSuccessColumn ( String successColumn ) {
         this.successColumn = successColumn;
+    }
+
+    /**
+     * <p>Sets the tablespace where to create the schema history table that will be used by Flyway.</p>
+     * <p>This setting is only relevant for databases that do support the notion of tablespaces. It's value is simply
+     * ignored for all others.</p>
+     *
+     * @param tablespace The tablespace where to create the schema history table that will be used by Flyway. (default: The default tablespace for the database connection)
+     */
+    public void setTablespace(String tablespace) {
+        this.tablespace = tablespace;
     }
 
     /**
@@ -1470,6 +1494,14 @@ public class ClassicConfiguration implements Configuration {
 
 
 
+
+
+
+
+
+
+
+
     @Override
     public boolean isOracleSqlplus() {
 
@@ -1489,6 +1521,33 @@ public class ClassicConfiguration implements Configuration {
     public void setOracleSqlplus(boolean oracleSqlplus) {
 
         throw new org.flywaydb.core.internal.license.FlywayProUpgradeRequiredException("oracle.sqlplus");
+
+
+
+
+    }
+
+    @Override
+    public boolean isOracleSqlplusWarn() {
+
+        throw new org.flywaydb.core.internal.license.FlywayProUpgradeRequiredException("oracle.sqlplusWarn");
+
+
+
+
+    }
+
+    /**
+     * Whether Flyway should issue a warning instead of an error whenever it encounters an Oracle SQL*Plus statement
+     * it doesn't yet support.
+     *
+     * <p><i>Flyway Pro and Flyway Enterprise only</i></p>
+     *
+     * @param oracleSqlplusWarn  {@code true} to issue a warning. {@code false} to fail fast instead. (default: {@code false})
+     */
+    public void setOracleSqlplusWarn(boolean oracleSqlplusWarn) {
+
+        throw new org.flywaydb.core.internal.license.FlywayProUpgradeRequiredException("oracle.sqlplusWarn");
 
 
 
@@ -1537,6 +1596,7 @@ public class ClassicConfiguration implements Configuration {
 
 
 
+
         setEncoding(configuration.getEncoding());
         setGroup(configuration.isGroup());
         setIgnoreFutureMigrations(configuration.isIgnoreFutureMigrations());
@@ -1561,7 +1621,7 @@ public class ClassicConfiguration implements Configuration {
         setSqlMigrationSeparator(configuration.getSqlMigrationSeparator());
         setSqlMigrationSuffixes(configuration.getSqlMigrationSuffixes());
         setTable(configuration.getTable());
-
+        setTablespace(configuration.getTablespace());
         setInstalledRankColumn( configuration.getInstalledRankColumn() );
         setVersionColumn( configuration.getVersionColumn() );
         setDescriptionColumn( configuration.getDescriptionColumn() );
@@ -1572,7 +1632,6 @@ public class ClassicConfiguration implements Configuration {
         setInstalledOnColumn( configuration.getInstalledOnColumn() );
         setExecutionTimeColumn( configuration.getExecutionTimeColumn() );
         setSuccessColumn( configuration.getSuccessColumn() );
-
         setTarget(configuration.getTarget());
         setValidateOnMigrate(configuration.isValidateOnMigrate());
     }
@@ -1680,6 +1739,10 @@ public class ClassicConfiguration implements Configuration {
         String tableProp = props.remove(ConfigUtils.TABLE);
         if (tableProp != null) {
             setTable(tableProp);
+        }
+        String tablespaceProp = props.remove(ConfigUtils.TABLESPACE);
+        if (tablespaceProp != null) {
+            setTablespace(tablespaceProp);
         }
         Boolean cleanOnValidationErrorProp = getBooleanProp(props, ConfigUtils.CLEAN_ON_VALIDATION_ERROR);
         if (cleanOnValidationErrorProp != null) {
@@ -1800,6 +1863,11 @@ public class ClassicConfiguration implements Configuration {
         Boolean oracleSqlplusProp = getBooleanProp(props, ConfigUtils.ORACLE_SQLPLUS);
         if (oracleSqlplusProp != null) {
             setOracleSqlplus(oracleSqlplusProp);
+        }
+
+        Boolean oracleSqlplusWarnProp = getBooleanProp(props, ConfigUtils.ORACLE_SQLPLUS_WARN);
+        if (oracleSqlplusWarnProp != null) {
+            setOracleSqlplusWarn(oracleSqlplusWarnProp);
         }
 
         String licenseKeyProp = props.remove(ConfigUtils.LICENSE_KEY);

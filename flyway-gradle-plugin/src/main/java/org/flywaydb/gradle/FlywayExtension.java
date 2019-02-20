@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2018 Boxfuse GmbH
+ * Copyright 2010-2019 Boxfuse GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,13 +58,21 @@ public class FlywayExtension {
     public String initSql;
 
     /**
-     * <p>The name of the schema schema history table that will be used by Flyway. (default: flyway_schema_history)</p><p> By default
+     * <p>The name of the schema history table that will be used by Flyway. (default: flyway_schema_history)</p><p> By default
      * (single-schema mode) the schema history table is placed in the default schema for the connection provided by the
      * datasource. </p> <p> When the <i>flyway.schemas</i> property is set (multi-schema mode), the schema history table is
      * placed in the first schema of the list. </p>
      * <p>Also configurable with Gradle or System Property: ${flyway.table}</p>
      */
     public String table;
+
+    /**
+     * <p>The tablespace where to create the schema history table that will be used by Flyway.</p>
+     * <p>This setting is only relevant for databases that do support the notion of tablespaces. It's value is simply
+     * ignored for all others.</p> (default: The default tablespace for the database connection)
+     * <p>Also configurable with Gradle or System Property: ${flyway.tablespace}</p>
+     */
+    public String tablespace;
 
     /**
      * The schemas managed by Flyway. These schema names are case-sensitive. (default: The default schema for the database connection)
@@ -212,7 +220,13 @@ public class FlywayExtension {
     public Boolean validateOnMigrate;
 
     /**
-     * Whether to automatically call clean or not when a validation error occurs
+     * Whether to automatically call clean or not when a validation error occurs. (default: {@code false})<br>
+     * <p> This is exclusively intended as a convenience for development. even though we
+     * strongly recommend not to change migration scripts once they have been checked into SCM and run, this provides a
+     * way of dealing with this case in a smooth manner. The database will be wiped clean automatically, ensuring that
+     * the next migration will bring you back to the state checked into SCM.</p>
+     * <p><b>Warning ! Do not enable in production !</b></p><br>
+     * <p>Also configurable with Gradle or System Property: ${flyway.cleanOnValidationError}</p>
      */
     public Boolean cleanOnValidationError;
 
@@ -375,6 +389,14 @@ public class FlywayExtension {
      * <p><i>Flyway Pro and Flyway Enterprise only</i></p>
      */
     public Boolean oracleSqlplus;
+
+    /**
+     * Whether Flyway should issue a warning instead of an error whenever it encounters an Oracle SQL*Plus statement
+     * it doesn't yet support. (default: {@code false})
+     * <p>Also configurable with Gradle or System Property: ${flyway.oracle.sqlplusWarn}</p>
+     * <p><i>Flyway Pro and Flyway Enterprise only</i></p>
+     */
+    public Boolean oracleSqlplusWarn;
 
     /**
      * Your Flyway license key (FL01...). Not yet a Flyway Pro or Enterprise Edition customer?

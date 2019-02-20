@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2018 Boxfuse GmbH
+ * Copyright 2010-2019 Boxfuse GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ import static org.flywaydb.core.internal.configuration.ConfigUtils.putIfSet;
 /**
  * Common base class for all mojos with all common attributes.
  */
-@SuppressWarnings({"JavaDoc", "FieldCanBeLocal", "UnusedDeclaration"})
+@SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
 abstract class AbstractFlywayMojo extends AbstractMojo {
     private static final String CONFIG_WORKING_DIRECTORY = "flyway.workingDirectory";
     private static final String CONFIG_SERVER_ID = "flyway.serverId";
@@ -140,6 +140,15 @@ abstract class AbstractFlywayMojo extends AbstractMojo {
      */
     @Parameter(property = ConfigUtils.TABLE)
     private String table;
+
+    /**
+     * <p>The tablespace where to create the schema history table that will be used by Flyway.</p>
+     * <p>This setting is only relevant for databases that do support the notion of tablespaces. It's value is simply
+     * ignored for all others.</p> (default: The default tablespace for the database connection)
+     * <p>Also configurable with Maven or System Property: ${flyway.tablespace}</p>
+     */
+    @Parameter(property = ConfigUtils.TABLESPACE)
+    private String tablespace;
 
     /**
      * The version to tag an existing schema with when executing baseline. (default: 1)<br/>
@@ -246,7 +255,7 @@ abstract class AbstractFlywayMojo extends AbstractMojo {
 
     /**
      * Whether to automatically call clean or not when a validation error occurs. (default: {@code false})<br/>
-     * <p> This is exclusively intended as a convenience for development. Even tough we
+     * <p> This is exclusively intended as a convenience for development. even though we
      * strongly recommend not to change migration scripts once they have been checked into SCM and run, this provides a
      * way of dealing with this case in a smooth manner. The database will be wiped clean automatically, ensuring that
      * the next migration will bring you back to the state checked into SCM.</p>
@@ -499,6 +508,15 @@ abstract class AbstractFlywayMojo extends AbstractMojo {
     private Boolean oracleSqlplus;
 
     /**
+     * Whether Flyway should issue a warning instead of an error whenever it encounters an Oracle SQL*Plus statement
+     * it doesn't yet support. (default: {@code false})
+     * <p>Also configurable with Maven or System Property: ${flyway.oracle.sqlplusWarn}</p>
+     * <p><i>Flyway Pro and Flyway Enterprise only</i></p>
+     */
+    @Parameter(property = ConfigUtils.ORACLE_SQLPLUS_WARN)
+    private Boolean oracleSqlplusWarn;
+
+    /**
      * Your Flyway license key (FL01...). Not yet a Flyway Pro or Enterprise Edition customer?
      * Request your <a href="https://flywaydb.org/download/">Flyway trial license key</a>
      * to try out Flyway Pro and Enterprise Edition features free for 30 days.
@@ -650,6 +668,7 @@ abstract class AbstractFlywayMojo extends AbstractMojo {
             putIfSet(conf, ConfigUtils.INIT_SQL, initSql);
             putArrayIfSet(conf, ConfigUtils.SCHEMAS, schemas);
             putIfSet(conf, ConfigUtils.TABLE, table);
+            putIfSet(conf, ConfigUtils.TABLESPACE, tablespace);
             putIfSet(conf, ConfigUtils.BASELINE_VERSION, baselineVersion);
             putIfSet(conf, ConfigUtils.BASELINE_DESCRIPTION, baselineDescription);
             putArrayIfSet(conf, ConfigUtils.LOCATIONS, locations);
@@ -687,6 +706,7 @@ abstract class AbstractFlywayMojo extends AbstractMojo {
             putIfSet(conf, ConfigUtils.BATCH, batch);
 
             putIfSet(conf, ConfigUtils.ORACLE_SQLPLUS, oracleSqlplus);
+            putIfSet(conf, ConfigUtils.ORACLE_SQLPLUS_WARN, oracleSqlplusWarn);
 
             putIfSet(conf, ConfigUtils.LICENSE_KEY, licenseKey);
 
