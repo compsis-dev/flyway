@@ -19,18 +19,11 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 import org.flywaydb.core.api.configuration.Configuration;
-import org.flywaydb.core.api.configuration.FluentConfiguration;
 import org.flywaydb.core.internal.database.base.Database;
 import org.flywaydb.core.internal.database.base.Table;
-import org.flywaydb.core.internal.parser.Parser;
 import org.flywaydb.core.internal.resource.LoadableResource;
-import org.flywaydb.core.internal.resource.StringResource;
 import org.flywaydb.core.internal.sqlscript.ParserSqlScript;
 import org.flywaydb.core.internal.sqlscript.SqlScript;
-
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.Map;
 
 /**
  * DB2 database.
@@ -86,12 +79,6 @@ public class DB2Database extends Database<DB2Connection> {
     }
 
     @Override
-    protected SqlScript getCreateScript(Map<String, String> placeholders) {
-        Parser parser = new DB2Parser(new FluentConfiguration().placeholders(placeholders));
-        return new ParserSqlScript(parser, getRawCreateScript(), false);
-    }
-
-    @Override
     public SqlScript createSqlScript(LoadableResource resource, boolean mixed
 
 
@@ -101,23 +88,23 @@ public class DB2Database extends Database<DB2Connection> {
     }
 
     @Override
-    public LoadableResource getRawCreateScript() {
+    protected String getRawCreateScript(Table table, boolean baseline) {
         String tablespace = configuration.getTablespace() == null
                 ? ""
                 : " IN \"" + configuration.getTablespace() + "\"";
 
-        return new StringResource("CREATE TABLE \"${schema}\".\"${table}\" (\n" +
-                "    \"${installedRankColumn}\" INT NOT NULL,\n" +
-                "    \"${versionColumn}\" VARCHAR(50),\n" +
-                "    \"${descriptionColumn}\" VARCHAR(200) NOT NULL,\n" +
-                "    \"${typeColumn}\" VARCHAR(20) NOT NULL,\n" +
-                "    \"${scriptColumn}\" VARCHAR(1000) NOT NULL,\n" +
-                "    \"${checksumColumn}\" INT,\n" +
-                "    \"${installedByColumn}\" VARCHAR(100) NOT NULL,\n" +
-                "    \"${installedOnColumn}\" TIMESTAMP DEFAULT CURRENT TIMESTAMP NOT NULL,\n" +
-                "    \"${executionTimeColumn}\" INT NOT NULL,\n" +
-                "    \"${successColumn}\" SMALLINT NOT NULL,\n" +
-                "    CONSTRAINT \"${table}_s\" CHECK (\"success\" in(0,1))\n" +
+        return "CREATE TABLE " + table + " (\n" +
+                "    \"" + configuration.getInstalledRankColumn() + "\" INT NOT NULL,\n" +
+                "    \"" + configuration.getVersionColumn() + "\" VARCHAR(50),\n" +
+                "    \"" + configuration.getDescriptionColumn() + "\" VARCHAR(200) NOT NULL,\n" +
+                "    \"" + configuration.getTypeColumn() + "\" VARCHAR(20) NOT NULL,\n" +
+                "    \"" + configuration.getScriptColumn() + "\" VARCHAR(1000) NOT NULL,\n" +
+                "    \"" + configuration.getChecksumColumn() + "\" INT,\n" +
+                "    \"" + configuration.getInstalledByColumn() + "\" VARCHAR(100) NOT NULL,\n" +
+                "    \"" + configuration.getInstalledOnColumn() + "\" TIMESTAMP DEFAULT CURRENT TIMESTAMP NOT NULL,\n" +
+                "    \"" + configuration.getExecutionTimeColumn() + "\" INT NOT NULL,\n" +
+                "    \"" + configuration.getSuccessColumn() + "\" SMALLINT NOT NULL,\n" +
+                "    CONSTRAINT \"" + table.getName() + "_s\" CHECK (\"success\" in(0,1))\n" +
                 ")" +
 
 
@@ -126,10 +113,10 @@ public class DB2Database extends Database<DB2Connection> {
 
 
 
-                + tablespace + ";\n"
-                + "ALTER TABLE \"${schema}\".\"${table}\" ADD CONSTRAINT \"${table}_pk\" PRIMARY KEY (\"${installedRankColumn}\");\n" +
-                "\n" +
-                "CREATE INDEX \"${schema}\".\"${table}_s_idx\" ON \"${schema}\".\"${table}\" (\"success\");");
+                + tablespace + ";\n" +
+                (baseline ? getBaselineStatement(table) + ";\n" : "") +
+                "ALTER TABLE " + table + " ADD CONSTRAINT \"" + table.getName() + "_pk\" PRIMARY KEY (\"" + configuration.getInstalledRankColumn() + "\");\n" +
+                "CREATE INDEX \"" + table.getSchema().getName() + "\".\"" + table.getName() + "_s_idx\" ON " + table + " (\"success\");";
     }
 
     @Override

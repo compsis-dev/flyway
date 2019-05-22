@@ -41,12 +41,9 @@ public class SchemaHistoryFactory {
 
 
     ) {
-        String installedBy = configuration.getInstalledBy() == null
-                ? database.getCurrentUser()
-                : configuration.getInstalledBy();
-
         Table table = schema.getTable(configuration.getTable());
-        JdbcTableSchemaHistory jdbcTableSchemaHistory = new JdbcTableSchemaHistory( configuration , database , table , installedBy );
+        //JdbcTableSchemaHistory jdbcTableSchemaHistory = new JdbcTableSchemaHistory( configuration , database , table , installedBy );
+        JdbcTableSchemaHistory jdbcTableSchemaHistory = new JdbcTableSchemaHistory(configuration , database , table);
 
 
 

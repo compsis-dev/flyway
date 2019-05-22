@@ -60,27 +60,21 @@ class JdbcTableSchemaHistory extends SchemaHistory {
      */
     private final LinkedList<AppliedMigration> cache = new LinkedList<>();
 
-    /**
-     * The user invoking Flyway, for audit purposes.
-     */
-    private final String installedBy;
-
     private Configuration configuration;
 
     /**
      * Creates a new instance of the schema history table support.
      * @param configuration 
      *
-     * @param database    The database to use.
-     * @param table       The schema history table used by Flyway.
-     * @param installedBy The user invoking Flyway, for audit purposes.
+     * @param database The database to use.
+     * @param table    The schema history table used by Flyway.
      */
-    JdbcTableSchemaHistory(Configuration configuration, Database database, Table table, String installedBy) {
+//    /JdbcTableSchemaHistory(Configuration configuration, Database database, Table table, String installedBy) {
+    JdbcTableSchemaHistory(Configuration configuration,Database database, Table table) {
         this.table = determineTable(table);
         this.database = database;
         this.connection = database.getMainConnection();
         this.jdbcTemplate = connection.getJdbcTemplate();
-        this.installedBy = installedBy;
         this.configuration = configuration;
     }
 
@@ -119,37 +113,43 @@ class JdbcTableSchemaHistory extends SchemaHistory {
     }
 
     @Override
-    public void create() {
-        int retries = 0;
-        while (!exists()) {
-            if (retries == 0) {
-                LOG.info("Creating Schema History table: " + table);
-            }
-            try {
-                new TransactionTemplate(connection.getJdbcConnection(), true).execute(new Callable<Object>() {
-                    @Override
-                    public Object call() {
-                        database.createSqlScriptExecutor(jdbcTemplate
-
-
-
-                        ).execute(database.getCreateScript(table));
-                        LOG.debug("Created Schema History table: " + table);
-                        return null;
+    public void create(final boolean baseline) {
+        connection.lock(table, new Callable<Object>() {
+            @Override
+            public Object call() {
+                int retries = 0;
+                while (!exists()) {
+                    if (retries == 0) {
+                        LOG.info("Creating Schema History table " + table + (baseline ? " with baseline" : "") + " ...");
                     }
-                });
-            } catch (FlywayException e) {
-                if (++retries >= 10) {
-                    throw e;
+                    try {
+                        new TransactionTemplate(connection.getJdbcConnection(), true).execute(new Callable<Object>() {
+                            @Override
+                            public Object call() {
+                                database.createSqlScriptExecutor(jdbcTemplate
+
+
+
+                                ).execute(database.getCreateScript(table, baseline));
+                                LOG.debug("Created Schema History table " + table + (baseline ? " with baseline" : ""));
+                                return null;
+                            }
+                        });
+                    } catch (FlywayException e) {
+                        if (++retries >= 10) {
+                            throw e;
+                        }
+                        try {
+                            LOG.debug("Schema History table creation failed. Retrying in 1 sec ...");
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e1) {
+                            // Ignore
+                        }
+                    }
                 }
-                try {
-                    LOG.debug("Schema History table creation failed. Retrying in 1 sec ...");
-                    Thread.sleep(1000);
-                } catch (InterruptedException e1) {
-                    // Ignore
-                }
+                return null;
             }
-        }
+        });
     }
 
     @Override
@@ -165,7 +165,8 @@ class JdbcTableSchemaHistory extends SchemaHistory {
                                          int executionTime, boolean success) {
         connection.restoreOriginalState();
 
-        // Lock again for databases with no DDL transactions to prevent implicit commits from triggering deadlocks
+        // Lock again for databases with no clean DDL transactions like Oracle
+        // to prevent implicit commits from triggering deadlocks
         // in highly concurrent environments
         if (!database.supportsDdlTransactions()) {
             table.lock();
@@ -175,7 +176,7 @@ class JdbcTableSchemaHistory extends SchemaHistory {
             String versionStr = version == null ? null : version.toString();
 
             jdbcTemplate.update(database.getInsertStatement(table),
-                    installedRank, versionStr, description, type.name(), script, checksum, installedBy,
+                    installedRank, versionStr, description, type.name(), script, checksum, database.getInstalledBy(),
                     executionTime, success);
 
             LOG.debug("Schema History table " + table + " successfully updated to reflect changes");

@@ -186,7 +186,7 @@ public abstract class Parser {
                 int parensDepth = token.getParensDepth();
                 if (tokenType == TokenType.KEYWORD && parensDepth == 0) {
                     keywords.add(token);
-                    adjustBlockDepth(context, keywords);
+                    adjustBlockDepth(context, tokens, token);
                 }
 
                 int blockDepth = context.getBlockDepth();
@@ -306,7 +306,21 @@ public abstract class Parser {
         return 10;
     }
 
-    protected void adjustBlockDepth(ParserContext context, List<Token> keywords) {
+    protected void adjustBlockDepth(ParserContext context, List<Token> tokens, Token keyword) {
+    }
+
+    protected static int getLastKeywordIndex(List<Token> tokens) {
+        return getLastKeywordIndex(tokens, tokens.size());
+    }
+
+    protected static int getLastKeywordIndex(List<Token> tokens, int endIndex) {
+        for (int i = endIndex - 1; i >= 0; i--) {
+            Token token = tokens.get(i);
+            if (token.getType() == TokenType.KEYWORD) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     static String keywordToUpperCase(String text) {
@@ -391,7 +405,7 @@ public abstract class Parser {
             reader.swallow();
             String text = reader.readUntilExcludingWithEscape(c, true);
             if (reader.peek('.')) {
-                text = readAdditionalIdentifierParts(reader, c);
+                text = readAdditionalIdentifierParts(reader, c, context.getDelimiter());
             }
             return new Token(TokenType.IDENTIFIER, pos, line, col, text, text, context.getParensDepth());
         }
@@ -426,16 +440,16 @@ public abstract class Parser {
             return handleDelimiter(reader, context, pos, line, col);
         }
         if (c == '_' || Character.isLetter(c)) {
-            String text = "" + (char) reader.read() + reader.readKeywordPart();
+            String text = "" + (char) reader.read() + reader.readKeywordPart(context.getDelimiter());
             if (reader.peek('.')) {
-                text += readAdditionalIdentifierParts(reader, identifierQuote);
+                text += readAdditionalIdentifierParts(reader, identifierQuote, context.getDelimiter());
             }
             if (!isKeyword(text)) {
                 return new Token(TokenType.IDENTIFIER, pos, line, col, text, text, context.getParensDepth());
             }
             return handleKeyword(reader, context, pos, line, col, text);
         }
-        if (StringUtils.isCharAnyOf(c, ",=*.:;[]~+-/%^|!@$&#<>'{}")) {
+        if (StringUtils.isCharAnyOf(c, ",=*.:;[]~+-/%^|?!@$&#<>'{}")) {
             String text = "" + (char) reader.read();
             return new Token(TokenType.SYMBOL, pos, line, col, text, text, context.getParensDepth());
         }
@@ -488,7 +502,7 @@ public abstract class Parser {
     }
 
     @SuppressWarnings("Duplicates")
-    private String readAdditionalIdentifierParts(PeekingReader reader, char quote) throws IOException {
+    private String readAdditionalIdentifierParts(PeekingReader reader, char quote, Delimiter delimiter) throws IOException {
         String result = "";
         reader.swallow();
         result += ".";
@@ -496,7 +510,7 @@ public abstract class Parser {
             reader.swallow();
             result += reader.readUntilExcludingWithEscape(quote, true);
         } else {
-            result += reader.readKeywordPart();
+            result += reader.readKeywordPart(delimiter);
         }
         if (reader.peek('.')) {
             reader.swallow();
@@ -505,7 +519,7 @@ public abstract class Parser {
                 reader.swallow();
                 result += reader.readUntilExcludingWithEscape(quote, true);
             } else {
-                result += reader.readKeywordPart();
+                result += reader.readKeywordPart(delimiter);
             }
         }
         return result;

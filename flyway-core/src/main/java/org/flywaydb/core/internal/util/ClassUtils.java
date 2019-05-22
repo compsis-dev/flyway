@@ -20,7 +20,6 @@ import org.flywaydb.core.api.logging.Log;
 import org.flywaydb.core.api.logging.LogFactory;
 
 import java.io.File;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -133,16 +132,12 @@ public class ClassUtils {
             clazz.getDeclaredConstructor().newInstance();
             LOG.debug("Found class: " + className);
             return clazz;
-        } catch (InternalError | NoClassDefFoundError | ClassNotFoundException | IllegalAccessException
-                | InstantiationException | NoSuchMethodException | InvocationTargetException e) {
+        } catch (Throwable e) {
             Throwable rootCause = ExceptionUtils.getRootCause(e);
             LOG.debug("Skipping " + className + " (" + e.getClass().getSimpleName() + ": " + e.getMessage()
                     + (rootCause == e ? "" :
                     " caused by " + rootCause.getClass().getSimpleName() + ": " + rootCause.getMessage()
                             + " at " + ExceptionUtils.getThrowLocation(rootCause)));
-            return null;
-        } catch (IncompatibleClassChangeError e) {
-            LOG.warn("Skipping incompatibly changed class: " + className);
             return null;
         }
     }
@@ -168,20 +163,23 @@ public class ClassUtils {
     }
 
     /**
-     * Adds a jar or a directory with this name to the classpath.
+     * Adds these jars or directories to the classpath.
      *
      * @param classLoader The current ClassLoader.
-     * @param name        The name of the jar or directory to add.
+     * @param jarFiles    The jars or directories to add.
      * @return The new ClassLoader containing the additional jar or directory.
      */
-    public static ClassLoader addJarOrDirectoryToClasspath(ClassLoader classLoader, String name) {
-        LOG.debug("Adding location to classpath: " + name);
+    public static ClassLoader addJarsOrDirectoriesToClasspath(ClassLoader classLoader, List<File> jarFiles) {
+        List<URL> urls = new ArrayList<>();
+        for (File jarFile : jarFiles) {
+            LOG.debug("Adding location to classpath: " + jarFile.getAbsolutePath());
 
-        try {
-            URL url = new File(name).toURI().toURL();
-            return new URLClassLoader(new URL[]{url}, classLoader);
-        } catch (Exception e) {
-            throw new FlywayException("Unable to load " + name, e);
+            try {
+                urls.add(jarFile.toURI().toURL());
+            } catch (Exception e) {
+                throw new FlywayException("Unable to load " + jarFile.getPath(), e);
+            }
         }
+        return new URLClassLoader(urls.toArray(new URL[0]), classLoader);
     }
 }
