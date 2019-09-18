@@ -82,7 +82,7 @@ import org.flywaydb.core.internal.util.StringUtils;
 /**
  * Oracle implementation of Schema.
  */
-public class OracleSchema extends Schema<OracleDatabase> {
+public class OracleSchema extends Schema<OracleDatabase, OracleTable> {
     private static final Log LOG = LogFactory.getLog(OracleSchema.class);
 
     /**
@@ -309,10 +309,10 @@ public class OracleSchema extends Schema<OracleDatabase> {
     }
 
     @Override
-    protected Table[] doAllTables() throws SQLException {
+    protected OracleTable[] doAllTables() throws SQLException {
         List<String> tableNames = TABLE.getObjectNames(jdbcTemplate, database, this);
 
-        Table[] tables = new Table[tableNames.size()];
+        OracleTable[] tables = new OracleTable[tableNames.size()];
         for (int i = 0; i < tableNames.size(); i++) {
             tables[i] = new OracleTable(jdbcTemplate, database, this, tableNames.get(i));
         }

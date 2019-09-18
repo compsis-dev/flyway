@@ -56,7 +56,11 @@ public abstract class AbstractFlywayTask extends DefaultTask {
     /**
      * The default Gradle configurations to use.
      */
-    private static final String[] DEFAULT_CONFIGURATIONS = {"compile", "runtime", "testCompile", "testRuntime"};
+    // #2272: Gradle 4.x introduced additional configuration names and Gradle 5.0 deprecated some old ones.
+    // -> Rely on historic ones for Gradle 3.x
+    private static final String[] DEFAULT_CONFIGURATIONS_GRADLE3 = {"compileClasspath", "runtime", "testCompileClasspath", "testRuntime"};
+    // -> And use new ones with Gradle 4.x and newer
+    private static final String[] DEFAULT_CONFIGURATIONS_GRADLE45 = {"compileClasspath", "runtimeClasspath", "testCompileClasspath", "testRuntimeClasspath"};
 
     /**
      * The flyway {} block in the build script.
@@ -234,8 +238,13 @@ public abstract class AbstractFlywayTask extends DefaultTask {
 
     /**
      * The target version up to which Flyway should consider migrations.
-     * Migrations with a higher version number will be ignored.
-     * The special value {@code current} designates the current version of the schema.
+     * Migrations with a higher version number will be ignored. 
+     * Special values:
+     * <ul>
+     * <li>{@code current}: designates the current version of the schema</li>
+     * <li>{@code latest}: the latest version of the schema, as defined by the migration with the highest version</li>
+     * </ul>
+     * Defaults to {@code latest}.
      */
     public String target;
 
@@ -254,6 +263,13 @@ public abstract class AbstractFlywayTask extends DefaultTask {
      * Allows migrations to be run "out of order"
      */
     public Boolean outOfOrder;
+
+    /**
+     * Whether Flyway should output a table with the results of queries when executing migrations (default: true).
+     * <p><i>Flyway Pro and Flyway Enterprise only</i></p>
+     * <p>Also configurable with Gradle or System Property: ${flyway.outputQueryResults}</p>
+     */
+    public Boolean outputQueryResults;
 
     /**
      * Whether to automatically call validate or not when running migrate. (default: true)
@@ -342,7 +358,14 @@ public abstract class AbstractFlywayTask extends DefaultTask {
     public Boolean baselineOnMigrate;
 
     /**
-     * Whether to allow mixing transactional and non-transactional statements within the same migration.
+     * Whether to allow mixing transactional and non-transactional statements within the same migration. Enabling this
+     * automatically causes the entire affected migration to be run without a transaction.
+     *
+     * <p>Note that this is only applicable for PostgreSQL, Aurora PostgreSQL, SQL Server and SQLite which all have
+     * statements that do not run at all within a transaction.</p>
+     * <p>This is not to be confused with implicit transaction, as they occur in MySQL or Oracle, where even though a
+     * DDL statement was run within within a transaction, the database will issue an implicit commit before and after
+     * its execution.</p>
      * <p>{@code true} if mixed migrations should be allowed. {@code false} if an error should be thrown instead. (default: {@code false})</p>
      */
     public Boolean mixed;
@@ -553,7 +576,10 @@ public abstract class AbstractFlywayTask extends DefaultTask {
         if (extension.configurations != null) {
             return extension.configurations;
         }
-        return DEFAULT_CONFIGURATIONS;
+        if (getProject().getGradle().getGradleVersion().startsWith("3")) {
+            return DEFAULT_CONFIGURATIONS_GRADLE3;
+        }
+        return DEFAULT_CONFIGURATIONS_GRADLE45;
     }
 
     /**
@@ -597,6 +623,7 @@ public abstract class AbstractFlywayTask extends DefaultTask {
         putIfSet(conf, ConfigUtils.PLACEHOLDER_SUFFIX, placeholderSuffix, extension.placeholderSuffix);
         putIfSet(conf, ConfigUtils.TARGET, target, extension.target);
         putIfSet(conf, ConfigUtils.OUT_OF_ORDER, outOfOrder, extension.outOfOrder);
+        putIfSet(conf, ConfigUtils.OUTPUT_QUERY_RESULTS, outputQueryResults, extension.outputQueryResults);
         putIfSet(conf, ConfigUtils.VALIDATE_ON_MIGRATE, validateOnMigrate, extension.validateOnMigrate);
         putIfSet(conf, ConfigUtils.CLEAN_ON_VALIDATION_ERROR, cleanOnValidationError, extension.cleanOnValidationError);
         putIfSet(conf, ConfigUtils.IGNORE_MISSING_MIGRATIONS, ignoreMissingMigrations, extension.ignoreMissingMigrations);

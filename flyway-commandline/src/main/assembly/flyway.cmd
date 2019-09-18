@@ -61,11 +61,11 @@ if "%FLYWAY_EDITION%"=="" (
   set FLYWAY_EDITION=community
 )
 
-%JAVA_CMD% %JAVA_ARGS% -cp "%CLASSPATH%;%INSTALLDIR%\lib\%FLYWAY_EDITION%\*;%INSTALLDIR%\drivers\*" org.flywaydb.commandline.Main %*
+%JAVA_CMD% %JAVA_ARGS% -cp "%CLASSPATH%;%INSTALLDIR%\lib\*;%INSTALLDIR%\lib\%FLYWAY_EDITION%\*;%INSTALLDIR%\drivers\*" org.flywaydb.commandline.Main %*
 
 @REM Exit using the same code returned from Java
 EXIT /B %ERRORLEVEL%
 
-:getCurrentBatch variableName
+:getCurrentBatch
     set "%~1=%~f0"
     goto :eof

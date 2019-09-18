@@ -19,6 +19,8 @@ import org.flywaydb.core.api.configuration.Configuration;
 import org.flywaydb.core.internal.database.base.Database;
 import org.flywaydb.core.internal.database.base.Schema;
 import org.flywaydb.core.internal.database.base.Table;
+import org.flywaydb.core.internal.sqlscript.SqlScriptExecutorFactory;
+import org.flywaydb.core.internal.sqlscript.SqlScriptFactory;
 
 /**
  * Factory to obtain a reference to the schema history.
@@ -36,15 +38,17 @@ public class SchemaHistoryFactory {
      * @param schema        The schema whose history to track.
      * @return The schema history.
      */
-    public static SchemaHistory getSchemaHistory(Configuration configuration, Database database, Schema schema
+    public static SchemaHistory getSchemaHistory(Configuration configuration,
+                                                 SqlScriptExecutorFactory sqlScriptExecutorFactory,
+                                                 SqlScriptFactory sqlScriptFactory,
+                                                 Database database, Schema schema
 
 
 
     ) {
         Table table = schema.getTable(configuration.getTable());
-        //JdbcTableSchemaHistory jdbcTableSchemaHistory = new JdbcTableSchemaHistory( configuration , database , table , installedBy );
-        JdbcTableSchemaHistory jdbcTableSchemaHistory = new JdbcTableSchemaHistory(configuration , database , table);
-
+        JdbcTableSchemaHistory jdbcTableSchemaHistory =
+                new JdbcTableSchemaHistory(configuration, sqlScriptExecutorFactory, sqlScriptFactory, database, table);
 
 
 

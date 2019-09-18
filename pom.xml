@@ -81,12 +81,12 @@
         <snapshotRepository>
             <id>sonatype-nexus-snapshots</id>
             <name>Sonatype Nexus Snapshots</name>
-            <url>http://oss.sonatype.org/content/repositories/snapshots</url>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
         </snapshotRepository>
         <repository>
             <id>sonatype-nexus-staging</id>
             <name>Nexus Release Repository</name>
-            <url>http://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
         </repository>
 
 
@@ -112,12 +112,8 @@
         </repository>
         <repository>
             <id>flyway-repo</id>
-            <url>s3://flyway-repo/release</url>
+            <url>https://repo.flywaydb.org/repo</url>
         </repository>
-
-
-
-
 
 
 
@@ -129,13 +125,14 @@
     <properties>
         <version.maven>3.0</version.maven>
         <version.gradle>3.0</version.gradle>
-        <version.derby>10.14.2.0</version.derby>
+        <version.derby>10.15.1.3</version.derby>
         <version.h2>1.4.199</version.h2>
-        <version.hsqldb>2.4.1</version.hsqldb>
+        <version.hsqldb>2.5.0</version.hsqldb>
+        <version.jaybird>3.0.5</version.jaybird>
         <version.jna>4.5.2</version.jna>
         <version.jtds>1.3.1</version.jtds>
         <version.mariadb>2.4.0</version.mariadb>
-        <version.mysql>8.0.12</version.mysql>
+        <version.mysql>8.0.17</version.mysql>
         <version.mssql-jdbc>7.2.0.jre8</version.mssql-jdbc>
         <version.postgresql>42.2.5.jre6</version.postgresql>
         <version.sqlite>3.23.1</version.sqlite>
@@ -145,6 +142,7 @@
         <version.android>4.0.1.2</version.android>
         <version.slf4j>1.7.16</version.slf4j>
         <version.jre>11.0.2</version.jre>
+        <version.jansi>1.18</version.jansi>
     </properties>
 
     <dependencyManagement>
@@ -215,6 +213,18 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.derby</groupId>
+                <artifactId>derbytools</artifactId>
+                <version>${version.derby}</version>
+                <optional>true</optional>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.derby</groupId>
+                <artifactId>derbyshared</artifactId>
+                <version>${version.derby}</version>
+                <optional>true</optional>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.derby</groupId>
                 <artifactId>derbyclient</artifactId>
                 <version>${version.derby}</version>
                 <optional>true</optional>
@@ -229,6 +239,12 @@
                 <groupId>com.h2database</groupId>
                 <artifactId>h2</artifactId>
                 <version>${version.h2}</version>
+                <optional>true</optional>
+            </dependency>
+            <dependency>
+                <groupId>org.firebirdsql.jdbc</groupId>
+                <artifactId>jaybird-jdk18</artifactId>
+                <version>${version.jaybird}</version>
                 <optional>true</optional>
             </dependency>
             <dependency>
@@ -382,6 +398,11 @@
                 <version>1.8.4</version>
             </dependency>
             <dependency>
+                <groupId>org.fusesource.jansi</groupId>
+                <artifactId>jansi</artifactId>
+                <version>${version.jansi}</version>
+            </dependency>
+            <dependency>
                 <groupId>net.adoptopenjdk</groupId>
                 <artifactId>jre</artifactId>
                 <version>${version.jre}</version>
@@ -464,7 +485,7 @@
                 </plugin>
                 <plugin>
                     <artifactId>maven-plugin-plugin</artifactId>
-                    <version>3.5.2</version>
+                    <version>3.6.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.codehaus.plexus</groupId>
@@ -574,6 +595,7 @@
                         <exclude>.gitattributes</exclude>
                         <exclude>.travis.yml</exclude>
                         <exclude>**/flyway</exclude>
+                        <exclude>**/*_BOM.sql</exclude>
                     </excludes>
                     <strictCheck>true</strictCheck>
                     <mapping>
@@ -681,6 +703,14 @@
                     <deployAtEnd>true</deployAtEnd>
                 </configuration>
             </plugin>
+            <plugin>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <configuration>
+                    <detectJavaApiLink>false</detectJavaApiLink>
+                    <encoding>UTF-8</encoding>
+                    <doclint>none</doclint>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
@@ -690,6 +720,7 @@
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>3.0.1</version>
                 <configuration>
+                    <detectJavaApiLink>false</detectJavaApiLink>
                     <encoding>UTF-8</encoding>
                     <failOnError>false</failOnError>
                 </configuration>
@@ -710,10 +741,6 @@
                 <plugins>
                     <plugin>
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <configuration>
-                            <encoding>UTF-8</encoding>
-                            <additionalparam>-Xdoclint:none</additionalparam>
-                        </configuration>
                         <executions>
                             <execution>
                                 <id>attach-sources</id>

@@ -15,27 +15,30 @@
  */
 package org.flywaydb.core.internal.database.mysql;
 
+import org.flywaydb.core.api.FlywayException;
 import org.flywaydb.core.api.MigrationType;
+import org.flywaydb.core.api.MigrationVersion;
 import org.flywaydb.core.api.configuration.Configuration;
 import org.flywaydb.core.api.logging.Log;
 import org.flywaydb.core.api.logging.LogFactory;
 import org.flywaydb.core.internal.database.base.Database;
 import org.flywaydb.core.internal.database.base.Table;
+import org.flywaydb.core.internal.exception.FlywaySqlException;
 import org.flywaydb.core.internal.jdbc.DatabaseType;
+import org.flywaydb.core.internal.jdbc.JdbcConnectionFactory;
 import org.flywaydb.core.internal.jdbc.JdbcTemplate;
 import org.flywaydb.core.internal.jdbc.JdbcUtils;
-import org.flywaydb.core.internal.resource.LoadableResource;
-import org.flywaydb.core.internal.resource.ResourceProvider;
-import org.flywaydb.core.internal.sqlscript.ParserSqlScript;
-import org.flywaydb.core.internal.sqlscript.SqlScript;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * MySQL database.
  */
 public class MySQLDatabase extends Database<MySQLConnection> {
+    private static final Pattern MARIADB_VERSION_PATTERN = Pattern.compile("(\\d+\\.\\d+)\\.\\d+-MariaDB");
     private static final Log LOG = LogFactory.getLog(MySQLDatabase.class);
 
     /**
@@ -44,28 +47,45 @@ public class MySQLDatabase extends Database<MySQLConnection> {
     private final boolean pxcStrict;
 
     /**
+     * Whether the event scheduler table is queryable.
+     */
+    final boolean eventSchedulerQueryable;
+
+    /**
      * Creates a new instance.
      *
      * @param configuration The Flyway configuration.
-     * @param connection    The connection to use.
      */
-    public MySQLDatabase(Configuration configuration, Connection connection, boolean originalAutoCommit
+    public MySQLDatabase(Configuration configuration, JdbcConnectionFactory jdbcConnectionFactory
 
 
 
     ) {
-        super(configuration, connection, originalAutoCommit
+        super(configuration, jdbcConnectionFactory
 
 
 
         );
 
-        pxcStrict = isRunningInPerconaXtraDBClusterWithStrictMode(connection);
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(rawMainJdbcConnection, databaseType);
+        pxcStrict = isRunningInPerconaXtraDBClusterWithStrictMode(jdbcTemplate);
+        eventSchedulerQueryable = DatabaseType.MYSQL == databaseType || isEventSchedulerQueryable(jdbcTemplate);
     }
 
-    static boolean isRunningInPerconaXtraDBClusterWithStrictMode(Connection connection) {
+    private static boolean isEventSchedulerQueryable(JdbcTemplate jdbcTemplate) {
         try {
-            if ("ENFORCING".equals(new JdbcTemplate(connection).queryForString(
+            // Attempt query
+            jdbcTemplate.queryForString("SELECT event_name FROM information_schema.events LIMIT 1");
+            return true;
+        } catch (SQLException e) {
+            LOG.debug("Detected unqueryable MariaDB event scheduler, most likely due to it being OFF or DISABLED.");
+            return false;
+        }
+    }
+
+    static boolean isRunningInPerconaXtraDBClusterWithStrictMode(JdbcTemplate jdbcTemplate) {
+        try {
+            if ("ENFORCING".equals(jdbcTemplate.queryForString(
                     "select VARIABLE_VALUE from performance_schema.global_variables"
                             + " where variable_name = 'pxc_strict_mode'"))) {
                 LOG.debug("Detected Percona XtraDB Cluster in strict mode");
@@ -87,7 +107,7 @@ public class MySQLDatabase extends Database<MySQLConnection> {
     }
 
     @Override
-    protected String getRawCreateScript(Table table, boolean baseline) {
+    public String getRawCreateScript(Table table, boolean baseline) {
         String tablespace =
 
 
@@ -106,7 +126,7 @@ public class MySQLDatabase extends Database<MySQLConnection> {
                         "     '" + MigrationType.BASELINE + "' as \"type\"," +
                         "     '" + configuration.getBaselineDescription() + "' as \"script\"," +
                         "     NULL as \"checksum\"," +
-                        "     '" + installedBy + "' as \"installed_by\"," +
+                        "     '" + getInstalledBy() + "' as \"installed_by\"," +
                         "     CURRENT_TIMESTAMP as \"installed_on\"," +
                         "     0 as \"execution_time\"," +
                         "     TRUE as \"success\"\n";
@@ -137,17 +157,36 @@ public class MySQLDatabase extends Database<MySQLConnection> {
     }
 
     @Override
-    protected MySQLConnection getConnection(Connection connection
-
-
-
-    ) {
-        return new MySQLConnection(configuration, this, connection, originalAutoCommit
-
-
-
-        );
+    protected MySQLConnection doGetConnection(Connection connection) {
+        return new MySQLConnection(this, connection);
     }
+
+    @Override
+    protected MigrationVersion determineVersion() {
+        if (databaseType == DatabaseType.MARIADB) {
+            try {
+                String productVersion = jdbcMetaData.getDatabaseProductVersion();
+                Matcher matcher = MARIADB_VERSION_PATTERN.matcher(productVersion);
+
+                if (!matcher.find()){
+                    throw new FlywayException("Unable to determine MariaDB version from '" + productVersion + "'");
+                }
+
+                return MigrationVersion.fromVersion(matcher.group(1));
+
+            } catch (SQLException e){
+                throw new FlywaySqlException("Unable to determine MariaDB server version", e);
+            }
+        }
+
+        return super.determineVersion();
+    }
+
+
+
+
+
+
 
 
 
@@ -191,15 +230,6 @@ public class MySQLDatabase extends Database<MySQLConnection> {
 
             recommendFlywayUpgradeIfNecessary("8.0");
         }
-    }
-
-    @Override
-    public SqlScript createSqlScript(LoadableResource resource, boolean mixed
-
-
-
-    ) {
-        return new ParserSqlScript(new MySQLParser(configuration), resource, mixed);
     }
 
     @Override

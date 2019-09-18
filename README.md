@@ -14,7 +14,7 @@ Windows, macOS, Linux, Docker, Java and Android
 Maven and Gradle
 
 #### Supported databases
-Oracle, SQL Server, DB2, MySQL, Aurora MySQL, MariaDB, Percona XtraDB Cluster, PostgreSQL, Aurora PostgreSQL, Redshift, CockroachDB, SAP HANA, Sybase ASE, Informix, H2, HSQLDB, Derby, SQLite
+Oracle, SQL Server, DB2, MySQL, Aurora MySQL, MariaDB, Percona XtraDB Cluster, PostgreSQL, Aurora PostgreSQL, Redshift, CockroachDB, SAP HANA, Sybase ASE, Informix, H2, HSQLDB, Derby, SQLite, Firebird
 
 #### Third party plugins
 SBT, Ant, Spring Boot, Grails, Play!, DropWizard, Grunt, Griffon, Ninja, ...
@@ -22,11 +22,11 @@ SBT, Ant, Spring Boot, Grails, Play!, DropWizard, Grunt, Griffon, Ninja, ...
 ## Documentation
 https://flywaydb.org
 
-## How to contribute
-https://flywaydb.org/documentation/contribute/
-
 ## About
 Flyway is brought to you by [Axel Fontaine](https://twitter.com/axelfontaine) and [Boxfuse](https://boxfuse.com) with the help of [many contributors](https://flywaydb.org/documentation/contribute/hallOfFame.html).
+
+## How to contribute
+https://flywaydb.org/documentation/contribute
 
 ## License
 Copyright (C) 2010-2019 [Boxfuse GmbH](https://boxfuse.com)

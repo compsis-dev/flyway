@@ -62,7 +62,7 @@ abstract class AbstractFlywayMojo extends AbstractMojo {
     Log log;
 
     /**
-     * Whether to skip the execution of the Maven Plugin for this module.<br/>
+     * Whether to skip the execution of the Maven Plugin for this module.
      * <p>Also configurable with Maven or System Property: ${flyway.skip}</p>
      */
     @Parameter(property = CONFIG_SKIP)
@@ -275,8 +275,13 @@ abstract class AbstractFlywayMojo extends AbstractMojo {
 
     /**
      * The target version up to which Flyway should consider migrations.
-     * Migrations with a higher version number will be ignored.
-     * The special value {@code current} designates the current version of the schema. (default: the latest version)
+     * Migrations with a higher version number will be ignored. 
+     * Special values:
+     * <ul>
+     * <li>{@code current}: designates the current version of the schema</li>
+     * <li>{@code latest}: the latest version of the schema, as defined by the migration with the highest version</li>
+     * </ul>
+     * Defaults to {@code latest}.
      * <p>Also configurable with Maven or System Property: ${flyway.target}</p>
      */
     @Parameter(property = ConfigUtils.TARGET)
@@ -290,6 +295,14 @@ abstract class AbstractFlywayMojo extends AbstractMojo {
      */
     @Parameter(property = ConfigUtils.OUT_OF_ORDER)
     private Boolean outOfOrder;
+
+    /**
+     * Whether Flyway should output a table with the results of queries when executing migrations (default: true).
+     * <p><i>Flyway Pro and Flyway Enterprise only</i></p>
+     * <p>Also configurable with Maven or System Property: ${flyway.outputQueryResults}</p>
+     */
+    @Parameter(property = ConfigUtils.OUTPUT_QUERY_RESULTS)
+    private Boolean outputQueryResults;
 
     /**
      * Ignore missing migrations when reading the schema history table. These are migrations that were performed by an
@@ -413,8 +426,14 @@ abstract class AbstractFlywayMojo extends AbstractMojo {
     private Boolean validateOnMigrate;
 
     /**
-     * Whether to allow mixing transactional and non-transactional statements within the same migration.
-     * <p>
+     * Whether to allow mixing transactional and non-transactional statements within the same migration. Enabling this
+     * automatically causes the entire affected migration to be run without a transaction.
+     *
+     * <p>Note that this is only applicable for PostgreSQL, Aurora PostgreSQL, SQL Server and SQLite which all have
+     * statements that do not run at all within a transaction.</p>
+     * <p>This is not to be confused with implicit transaction, as they occur in MySQL or Oracle, where even though a
+     * DDL statement was run within within a transaction, the database will issue an implicit commit before and after
+     * its execution.</p>
      * {@code true} if mixed migrations should be allowed. {@code false} if an error should be thrown instead. (default: {@code false})
      * <p>Also configurable with Maven or System Property: ${flyway.mixed}</p>
      */
@@ -615,7 +634,7 @@ abstract class AbstractFlywayMojo extends AbstractMojo {
     /* private -> for testing */ boolean getBooleanProperty(String systemPropertyName, boolean mavenPropertyValue) {
         String systemPropertyValue = System.getProperty(systemPropertyName);
         if (systemPropertyValue != null) {
-            return Boolean.getBoolean(systemPropertyName);
+            return Boolean.parseBoolean(systemPropertyValue);
         }
         return mavenPropertyValue;
     }
@@ -692,6 +711,7 @@ abstract class AbstractFlywayMojo extends AbstractMojo {
             putIfSet(conf, ConfigUtils.CLEAN_ON_VALIDATION_ERROR, cleanOnValidationError);
             putIfSet(conf, ConfigUtils.CLEAN_DISABLED, cleanDisabled);
             putIfSet(conf, ConfigUtils.OUT_OF_ORDER, outOfOrder);
+            putIfSet(conf, ConfigUtils.OUTPUT_QUERY_RESULTS, outputQueryResults);
             putIfSet(conf, ConfigUtils.TARGET, target);
             putIfSet(conf, ConfigUtils.IGNORE_MISSING_MIGRATIONS, ignoreMissingMigrations);
             putIfSet(conf, ConfigUtils.IGNORE_IGNORED_MIGRATIONS, ignoreIgnoredMigrations);

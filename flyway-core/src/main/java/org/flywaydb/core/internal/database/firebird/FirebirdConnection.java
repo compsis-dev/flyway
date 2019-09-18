@@ -13,33 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.flywaydb.core.internal.database.db2;
+package org.flywaydb.core.internal.database.firebird;
 
 import org.flywaydb.core.internal.database.base.Connection;
 import org.flywaydb.core.internal.database.base.Schema;
 
 import java.sql.SQLException;
 
-/**
- * DB2 connection.
- */
-public class DB2Connection extends Connection<DB2Database> {
-    DB2Connection(DB2Database database, java.sql.Connection connection) {
+public class FirebirdConnection extends Connection<FirebirdDatabase> {
+
+    private static final String DUMMY_SCHEMA_NAME = "default";
+
+    FirebirdConnection(FirebirdDatabase database, java.sql.Connection connection) {
         super(database, connection);
     }
 
     @Override
     protected String getCurrentSchemaNameOrSearchPath() throws SQLException {
-        return jdbcTemplate.queryForString("select current_schema from sysibm.sysdummy1");
-    }
-
-    @Override
-    public void doChangeCurrentSchemaOrSearchPathTo(String schema) throws SQLException {
-        jdbcTemplate.execute("SET SCHEMA " + database.quote(schema));
+        return DUMMY_SCHEMA_NAME;
     }
 
     @Override
     public Schema getSchema(String name) {
-        return new DB2Schema(jdbcTemplate, database, name);
+        // database == schema, always return the same dummy schema
+        return new FirebirdSchema(jdbcTemplate, database, DUMMY_SCHEMA_NAME);
     }
 }

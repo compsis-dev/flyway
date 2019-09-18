@@ -15,12 +15,12 @@
  */
 package org.flywaydb.core.internal.info;
 
-
 import org.flywaydb.core.api.MigrationInfo;
 import org.flywaydb.core.api.MigrationState;
 import org.flywaydb.core.api.MigrationType;
 import org.flywaydb.core.api.MigrationVersion;
 import org.flywaydb.core.api.resolver.ResolvedMigration;
+import org.flywaydb.core.internal.resolver.ResolvedMigrationImpl;
 import org.flywaydb.core.internal.schemahistory.AppliedMigration;
 import org.flywaydb.core.internal.util.AbbreviationUtils;
 
@@ -318,6 +318,14 @@ public class MigrationInfoImpl implements MigrationInfo {
                 }
             }
         }
+
+        // Perform additional validation for pending migrations. This is not performed for previously applied migrations
+        // as it is assumed that if the checksum is unchanged, previous positive validation results still hold true.
+        // #2392: Migrations above target are also ignored as the user explicitly asked for them to not be taken into account.
+        if (!context.pending && MigrationState.PENDING == state && resolvedMigration instanceof ResolvedMigrationImpl) {
+            ((ResolvedMigrationImpl) resolvedMigration).validate();
+        }
+
         return null;
     }
 
@@ -348,31 +356,31 @@ public class MigrationInfoImpl implements MigrationInfo {
 
         // Below baseline migrations come before applied ones
         if (state == MigrationState.BELOW_BASELINE && oState.isApplied()) {
-            return Integer.MIN_VALUE;
+            return -1;
         }
         if (state.isApplied() && oState == MigrationState.BELOW_BASELINE) {
-            return Integer.MAX_VALUE;
+            return 1;
         }
 
         if (state == MigrationState.IGNORED && oState.isApplied()) {
             if (getVersion() != null && o.getVersion() != null) {
                 return getVersion().compareTo(o.getVersion());
             }
-            return Integer.MIN_VALUE;
+            return -1;
         }
         if (state.isApplied() && oState == MigrationState.IGNORED) {
             if (getVersion() != null && o.getVersion() != null) {
                 return getVersion().compareTo(o.getVersion());
             }
-            return Integer.MAX_VALUE;
+            return 1;
         }
 
         // Sort installed before pending
         if (getInstalledRank() != null) {
-            return Integer.MIN_VALUE;
+            return -1;
         }
         if (o.getInstalledRank() != null) {
-            return Integer.MAX_VALUE;
+            return 1;
         }
 
         // No migration installed, sort according to other criteria
@@ -398,10 +406,10 @@ public class MigrationInfoImpl implements MigrationInfo {
 
         // One versioned and one repeatable migration: versioned migration goes before repeatable one
         if (getVersion() != null) {
-            return Integer.MIN_VALUE;
+            return -1;
         }
         if (o.getVersion() != null) {
-            return Integer.MAX_VALUE;
+            return 1;
         }
 
         // Two repeatable migrations: sort by description

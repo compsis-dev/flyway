@@ -20,10 +20,7 @@ import org.flywaydb.core.api.configuration.Configuration;
 import org.flywaydb.core.internal.database.base.Database;
 import org.flywaydb.core.internal.database.base.Table;
 import org.flywaydb.core.internal.exception.FlywaySqlException;
-import org.flywaydb.core.internal.resource.LoadableResource;
-import org.flywaydb.core.internal.resource.ResourceProvider;
-import org.flywaydb.core.internal.sqlscript.ParserSqlScript;
-import org.flywaydb.core.internal.sqlscript.SqlScript;
+import org.flywaydb.core.internal.jdbc.JdbcConnectionFactory;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -32,40 +29,63 @@ import java.sql.SQLException;
  * H2 database.
  */
 public class H2Database extends Database<H2Connection> {
+
+    /**
+     * A dummy user used in Oracle mode, where USER() can return null but nulls can't be inserted into the
+     * schema history table
+     */
+    private static final String DEFAULT_USER = "<< default user >>";
+    /**
+     * A dummy script marker used in Oracle mode, where a marker row is inserted with no corresponding script.
+     */
+    private static final String DUMMY_SCRIPT_NAME = "<< history table creation script >>";
+    /**
+     * The compatibility modes supported by H2. See http://h2database.com/html/features.html#compatibility
+     */
+    private enum CompatibilityMode {
+        REGULAR,
+        DB2,
+        Derby,
+        HSQLDB,
+        MSSQLServer,
+        MySQL,
+        Oracle,
+        PostgreSQL,
+        Ignite
+    }
+
     /**
      * Whether this version supports DROP SCHEMA ... CASCADE.
      */
     boolean supportsDropSchemaCascade;
 
     /**
+     * The compatibility mode of the database
+     */
+    CompatibilityMode compatibilityMode;
+
+    /**
      * Creates a new instance.
      *
      * @param configuration The Flyway configuration.
-     * @param connection    The connection to use.
      */
-    public H2Database(Configuration configuration, Connection connection, boolean originalAutoCommit
+    public H2Database(Configuration configuration, JdbcConnectionFactory jdbcConnectionFactory
 
 
 
     ) {
-        super(configuration, connection, originalAutoCommit
+        super(configuration, jdbcConnectionFactory
 
 
 
         );
+
+        compatibilityMode = determineCompatibilityMode();
     }
 
     @Override
-    protected H2Connection getConnection(Connection connection
-
-
-
-    ) {
-        return new H2Connection(configuration, this, connection, originalAutoCommit
-
-
-
-        );
+    protected H2Connection doGetConnection(Connection connection) {
+        return new H2Connection(this, connection);
     }
 
     @Override
@@ -79,6 +99,25 @@ public class H2Database extends Database<H2Connection> {
         }
     }
 
+    private CompatibilityMode determineCompatibilityMode() {
+        try {
+            String mode = getMainConnection().getJdbcTemplate().queryForString(
+                    "SELECT VALUE FROM INFORMATION_SCHEMA.SETTINGS WHERE NAME = 'MODE'");
+            if (mode == null || "".equals(mode))
+                return CompatibilityMode.REGULAR;
+            return CompatibilityMode.valueOf(mode);
+        } catch (SQLException e) {
+            throw new FlywaySqlException("Unable to determine H2 compatibility mode", e);
+        }
+    }
+
+
+
+
+
+
+
+
     @Override
     public final void ensureSupported() {
         ensureDatabaseIsRecentEnough("1.2.137");
@@ -90,7 +129,12 @@ public class H2Database extends Database<H2Connection> {
     }
 
     @Override
-    protected String getRawCreateScript(Table table, boolean baseline) {
+    public String getRawCreateScript(Table table, boolean baseline) {
+        // In Oracle mode, empty strings in the marker row would be converted to NULLs. As the script column is
+        // defined as NOT NULL, we insert a dummy value when required.
+        String script = (compatibilityMode == CompatibilityMode.Oracle)
+                ? DUMMY_SCRIPT_NAME : "";
+
         return "CREATE TABLE IF NOT EXISTS " + table + " (\n" +
                 "    \"installed_rank\" INT NOT NULL,\n" +
                 "    \"version\" VARCHAR(50),\n" +
@@ -105,13 +149,13 @@ public class H2Database extends Database<H2Connection> {
                 "    CONSTRAINT \"" + table.getName() + "_pk\" PRIMARY KEY (\"installed_rank\")\n" +
                 ")" +
                 // Add special table created marker to compensate for the inability of H2 to lock empty tables
-                " AS SELECT -1, NULL, '<< Flyway Schema History table created >>', 'TABLE', '', NULL, '', CURRENT_TIMESTAMP, 0, TRUE;\n" +
+                " AS SELECT -1, NULL, '<< Flyway Schema History table created >>', 'TABLE', '" + script + "', NULL, '" + getInstalledBy() + "', CURRENT_TIMESTAMP, 0, TRUE;\n" +
                 (baseline ? getBaselineStatement(table) + ";\n" : "") +
                 "CREATE INDEX \"" + table.getSchema().getName() + "\".\"" + table.getName() + "_s_idx\" ON " + table + " (\"success\");";
     }
 
     @Override
-    public String getSelectStatement(Table table, int maxCachedInstalledRank) {
+    public String getSelectStatement(Table table) {
         return "SELECT " + quote("installed_rank")
                 + "," + quote("version")
                 + "," + quote("description")
@@ -125,22 +169,19 @@ public class H2Database extends Database<H2Connection> {
                 + " FROM " + table
                 // Ignore special table created marker
                 + " WHERE " + quote("type") + " != 'TABLE'"
-                + " AND " + quote("installed_rank") + " > " + maxCachedInstalledRank
+                + " AND " + quote("installed_rank") + " > ?"
                 + " ORDER BY " + quote("installed_rank");
     }
 
     @Override
-    public SqlScript createSqlScript(LoadableResource resource, boolean mixed
-
-
-
-    ) {
-        return new ParserSqlScript(new H2Parser(configuration), resource, mixed);
-    }
-
-    @Override
     protected String doGetCurrentUser() throws SQLException {
-        return getMainConnection().getJdbcTemplate().queryForString("SELECT USER()");
+        // In Oracle mode, empty strings in the installed_by column of the history table would be converted to NULLs.
+        // As H2 supports a null user, we use a dummy value when required.
+        String user = getMainConnection().getJdbcTemplate().queryForString("SELECT USER()");
+
+        if (compatibilityMode == CompatibilityMode.Oracle && (user == null || "".equals(user)))
+            return DEFAULT_USER;
+        return user;
     }
 
     @Override
